@@ -249,23 +249,206 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --primary-color: #1e88e5;
-            --primary-dark: #1565c0;
-            --primary-light: #64b5f6;
-            --dark-surface-1: #121212;
-            --dark-surface-2: #1e1e1e;
-            --text-muted: #b0b0b0;
-            --accent-color: #00acc1;
-            --border-color: rgba(255, 255, 255, 0.1);
-        }
-        
+        /* Checkout-specific styles */
         .checkout-section {
-            background-color: var(--dark-surface-2);
-            border-radius: 10px;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .checkout-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--foreground);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+        
+        .order-summary {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 20px;
+        }
+        
+        .order-summary h3 {
+            color: var(--foreground);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        
+        .order-item-image {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-right: 1rem;
+            border: 1px solid var(--border);
+        }
+        
+        .order-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .order-item-details {
+            flex-grow: 1;
+        }
+        
+        .order-item-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--foreground);
+        }
+        
+        .order-item-price {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+        }
+        
+        .order-item-total {
+            font-weight: 600;
+            text-align: right;
+            color: var(--foreground);
+        }
+        
+        .order-totals {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .order-total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            color: var(--foreground);
+        }
+        
+        .order-total-row.final {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--foreground);
+            border-top: 1px solid var(--border);
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .payment-method {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: var(--background);
+        }
+        
+        .payment-method:hover {
+            border-color: var(--primary);
+            background-color: var(--muted);
+        }
+        
+        .payment-method.selected {
+            border-color: var(--primary);
+            background-color: var(--muted);
+        }
+        
+        .payment-method i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-method span {
+            display: block;
+            font-weight: 500;
+            color: var(--foreground);
+        }
+        
+        .security-notice {
+            background-color: #dcfce7;
+            border: 1px solid #86efac;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .security-notice i {
+            color: #166534;
+            font-size: 1.25rem;
+        }
+        
+        .security-notice span {
+            color: #166534;
+            font-weight: 500;
+        }
+        
+        .place-order-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        @media (max-width: 991px) {
+            .order-summary {
+                position: static;
+                margin-top: 2rem;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .checkout-section,
+            .order-summary {
+                padding: 1.5rem;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+            
+            .order-item {
+                flex-wrap: wrap;
+            }
+            
+            .order-item-total {
+                width: 100%;
+                text-align: left;
+                margin-top: 0.5rem;
+            }
         }
         
         .checkout-section-title {
@@ -432,17 +615,39 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
 </head>
 <body>
     <!-- Top Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+    <nav class="navbar">
+        <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand" href="index.php">
-                <img src="images/icon.png" alt="710 Den Glass Logo" class="logo">
-                <span>710 Den Glass</span>
+                <img src="images/logo.png" alt="710DenGlass Logo" class="logo">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav me-auto">
+            <div class="d-flex align-items-center">
+                <a href="#" class="btn-icon me-2" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                    <i class="bi bi-cart3"></i>
+                    <?php if ($cart_items_count > 0): ?>
+                    <span class="cart-badge"><?php echo $cart_items_count; ?></span>
+                    <?php endif; ?>
+                </a>
+                <?php if ($is_logged_in): ?>
+                <div class="dropdown">
+                    <a href="#" class="btn-icon" data-bs-toggle="dropdown"><i class="bi bi-person-fill"></i></a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text">Hello, <?php echo htmlspecialchars($username); ?></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <?php if ($is_admin): ?>
+                        <li><a class="dropdown-item" href="backend.php"><i class="bi bi-gear me-2"></i> Admin</a></li>
+                        <?php endif; ?>
+                        <li><a class="dropdown-item" href="account.php"><i class="bi bi-person me-2"></i> Account</a></li>
+                        <li><a class="dropdown-item" href="orders.php"><i class="bi bi-box me-2"></i> Orders</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+                    </ul>
+                </div>
+                <?php else: ?>
+                <a href="login.php" class="btn-icon" title="Login / Register"><i class="bi bi-person-circle"></i></a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
                     <li class="nav-item">
                         <a class="nav-link" href="index.php">Home</a>
                     </li>
@@ -714,6 +919,13 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             </div>
         </div>
     </div>
+    
+    <!-- Floating AI Chat Icon -->
+    <div class="floating-chat-icon">
+        <a href="chat.php" class="btn btn-primary rounded-circle" title="AI Chat Assistant">
+            <i class="bi bi-chat-dots"></i>
+        </a>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -729,9 +941,10 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                 <div class="col-md-3">
                     <h4>Quick Links</h4>
                     <ul class="footer-links">
-                        <li><a href="index.php">Home</a></li>
+                        <li><a href="index.php">Shop</a></li>
                         <li><a href="about.php">About Us</a></li>
                         <li><a href="contact.php">Contact</a></li>
+                        <li><a href="chat.php">AI Chat</a></li>
                         <li><a href="terms.php">Terms & Conditions</a></li>
                         <li><a href="privacy.php">Privacy Policy</a></li>
                     </ul>
@@ -742,10 +955,11 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                         <?php foreach ($categories as $category): ?>
                         <li>
                             <a href="index.php?category=<?php echo $category['category_id']; ?>">
-                                <?php echo $category['name']; ?>
+                                <?php echo htmlspecialchars($category['name']); ?>
                             </a>
                         </li>
                         <?php endforeach; ?>
+                        <li><a href="index.php">All Categories</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2">

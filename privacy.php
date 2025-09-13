@@ -247,55 +247,6 @@ if (isset($_POST['verify_age'])) {
             <a class="navbar-brand" href="index.php">
                 <img src="images/logo.png" alt="710DenGlass Logo" class="logo">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMain">
-            <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="shop.php">Shop</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.php">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">Contact</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="chat.php">AI Chat</a>
-                    </li>
-                </ul>
-                <div class="nav-btns">
-                    <a href="#" class="btn btn-icon" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
-                        <i class="bi bi-cart3"></i>
-                        <?php if ($cart_items_count > 0): ?>
-                        <span class="cart-badge"><?php echo $cart_items_count; ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <?php if ($is_logged_in): ?>
-                    <div class="dropdown">
-                        <a href="#" class="btn btn-icon" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-fill"></i>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end dark-dropdown">
-                            <li><span class="dropdown-item-text">Hello, <?php echo htmlspecialchars($username); ?></span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <?php if ($is_admin): ?>
-                            <li><a class="dropdown-item" href="backend.php"><i class="bi bi-gear me-2"></i> Admin Dashboard</a></li>
-                            <?php endif; ?>
-                            <li><a class="dropdown-item" href="account.php"><i class="bi bi-person me-2"></i> My Account</a></li>
-                            <li><a class="dropdown-item" href="orders.php"><i class="bi bi-box me-2"></i> My Orders</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="index.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
-                        </ul>
-                    </div>
-                    <?php else: ?>
-                    <a href="login.php" class="btn btn-icon" title="Login / Register">
-                        <i class="bi bi-person-circle"></i>
-                    </a>
-                    <?php endif; ?>
-                </div>
-            </div>
         </div>
     </nav>
 

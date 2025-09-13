@@ -572,26 +572,6 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             display: none;
         }
 
-        /* Navbar styles from index.php */
-        .navbar { background-color: var(--dark-surface-2); box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 15px 0; }
-        .navbar-brand { font-weight: 700; font-size: 1.5rem; display: flex; align-items: center; }
-        .logo { height: 40px; margin-right: 10px; }
-        .navbar-dark .navbar-nav .nav-link { color: rgba(255,255,255,0.8); font-weight: 500; position: relative; transition: all 0.3s ease; }
-        .navbar-dark .navbar-nav .nav-link:hover,
-        .navbar-dark .navbar-nav .nav-link.active { color: var(--primary-light); }
-        .navbar-dark .navbar-nav .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background-color: var(--primary-light); transition: width 0.3s ease; }
-        .navbar-dark .navbar-nav .nav-link:hover::after,
-        .navbar-dark .navbar-nav .nav-link.active::after { width: 100%; }
-        .dark-dropdown { background-color: var(--dark-surface-2); border-color: rgba(255,255,255,0.1); }
-        .dark-dropdown .dropdown-item { color: rgba(255,255,255,0.8); transition: all 0.3s ease; }
-        .dark-dropdown .dropdown-item:hover { background-color: rgba(30,136,229,0.1); color: var(--primary-light); }
-        .search-form .form-control { background-color: rgba(255,255,255,0.1); border: none; border-radius: 50px; padding-left: 20px; color: white; transition: all 0.3s ease; }
-        .search-form .form-control:focus { background-color: rgba(255,255,255,0.15); box-shadow: 0 0 0 0.25rem rgba(30,136,229,0.25); }
-        .search-form .btn { border-radius: 50px; padding: 0.375rem 0.75rem; }
-        .nav-btns { display: flex; align-items: center; }
-        .btn-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255,255,255,0.1); color: white; margin-left: 10px; transition: all 0.3s ease; position: relative; }
-        .btn-icon:hover { background-color: var(--primary-color); color: white; transform: translateY(-2px); }
-        .cart-badge { position: absolute; top: -5px; right: -5px; background-color: var(--accent-color); color: white; font-size: 0.7rem; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
         @media (max-width: 768px) {
             .chat-container {
