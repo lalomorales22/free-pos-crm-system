@@ -218,12 +218,21 @@ if (isset($_SESSION['cart'])) {
                         </div>
                         
                         <?php if (count($product_images) > 1): ?>
-                        <div class="d-flex gap-2 mt-3" style="overflow-x: auto; padding-bottom: 0.5rem;">
-                            <?php foreach ($product_images as $index => $image): ?>
-                            <div class="thumbnail" data-image="<?php echo $image['image_path']; ?>" style="width: 80px; height: 80px; border-radius: var(--radius); overflow: hidden; cursor: pointer; border: 2px solid <?php echo $image['is_primary'] ? 'var(--primary)' : 'var(--border)'; ?>; flex-shrink: 0;">
-                                <img src="<?php echo $image['image_path']; ?>" alt="<?php echo $product['name']; ?> thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div class="product-thumbnails mt-3">
+                            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                <?php foreach ($product_images as $index => $image): ?>
+                                <div class="thumbnail <?php echo $image['is_primary'] ? 'active' : ''; ?>" 
+                                     data-image="<?php echo $image['image_path']; ?>" 
+                                     style="width: 80px; height: 80px; border-radius: var(--radius); overflow: hidden; cursor: pointer; border: 2px solid <?php echo $image['is_primary'] ? 'var(--primary)' : 'var(--border)'; ?>; flex-shrink: 0; transition: all 0.3s ease;">
+                                    <img src="<?php echo $image['image_path']; ?>" 
+                                         alt="<?php echo $product['name']; ?> thumbnail <?php echo $index + 1; ?>" 
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <?php endforeach; ?>
                             </div>
-                            <?php endforeach; ?>
+                            <div class="text-center mt-2">
+                                <small class="text-muted"><?php echo count($product_images); ?> of 5 images</small>
+                            </div>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -243,7 +252,7 @@ if (isset($_SESSION['cart'])) {
                     <!-- Product Price -->
                     <div class="product-price">
                         <?php if (!empty($product['sale_price'])): ?>
-                        <span class="old-price">$<?php echo number_format($product['price'], 2); ?></span>
+                        <span class="regular-price original">$<?php echo number_format($product['price'], 2); ?></span>
                         <span class="sale-price">$<?php echo number_format($product['sale_price'], 2); ?></span>
                         <?php else: ?>
                         <span class="regular-price">$<?php echo number_format($product['price'], 2); ?></span>
@@ -265,44 +274,6 @@ if (isset($_SESSION['cart'])) {
                     <!-- Product Description -->
                     <div class="product-description">
                         <p><?php echo nl2br($product['description']); ?></p>
-                    </div>
-                    
-                    <!-- Product Meta -->
-                    <div class="product-meta">
-                        <?php if (!empty($product['sku'])): ?>
-                        <div class="meta-item">
-                            <div class="meta-label">SKU</div>
-                            <div class="meta-value"><?php echo $product['sku']; ?></div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($product['material'])): ?>
-                        <div class="meta-item">
-                            <div class="meta-label">Material</div>
-                            <div class="meta-value"><?php echo $product['material']; ?></div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($product['color'])): ?>
-                        <div class="meta-item">
-                            <div class="meta-label">Color</div>
-                            <div class="meta-value"><?php echo $product['color']; ?></div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($product['dimensions'])): ?>
-                        <div class="meta-item">
-                            <div class="meta-label">Dimensions</div>
-                            <div class="meta-value"><?php echo $product['dimensions']; ?></div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($product['weight'])): ?>
-                        <div class="meta-item">
-                            <div class="meta-label">Weight</div>
-                            <div class="meta-value"><?php echo $product['weight']; ?> g</div>
-                        </div>
-                        <?php endif; ?>
                     </div>
                     
                     <!-- Product Tags -->
@@ -338,21 +309,10 @@ if (isset($_SESSION['cart'])) {
             </div>
         </div>
         
-        <!-- Product Tabs -->
-        <div class="product-tabs">
-            <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">Description</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button" role="tab" aria-controls="specifications" aria-selected="false">Specifications</button>
-                </li>
-            </ul>
-            <div class="tab-content" id="productTabsContent">
-                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                    <p><?php echo nl2br($product['description']); ?></p>
-                </div>
-                <div class="tab-pane fade" id="specifications" role="tabpanel" aria-labelledby="specifications-tab">
+        <!-- Product Specifications -->
+        <div class="product-specifications">
+            <h3 class="mb-3">Specifications</h3>
+            <div class="specifications-content">
                     <table class="specs-table">
                         <tr>
                             <td>Product Name</td>
@@ -393,7 +353,6 @@ if (isset($_SESSION['cart'])) {
                         </tr>
                         <?php endif; ?>
                     </table>
-                </div>
             </div>
         </div>
         
@@ -422,7 +381,7 @@ if (isset($_SESSION['cart'])) {
                             </h3>
                             <div class="product-price">
                                 <?php if (!empty($related['sale_price'])): ?>
-                                <span class="regular-price">$<?php echo number_format($related['price'], 2); ?></span>
+                                <span class="regular-price original">$<?php echo number_format($related['price'], 2); ?></span>
                                 <span class="sale-price">$<?php echo number_format($related['sale_price'], 2); ?></span>
                                 <?php else: ?>
                                 <span class="regular-price">$<?php echo number_format($related['price'], 2); ?></span>
@@ -518,8 +477,12 @@ if (isset($_SESSION['cart'])) {
             thumbnails.forEach(thumbnail => {
                 thumbnail.addEventListener('click', function() {
                     // Update active thumbnail
-                    thumbnails.forEach(t => t.classList.remove('active'));
+                    thumbnails.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.border = '2px solid var(--border)';
+                    });
                     this.classList.add('active');
+                    this.style.border = '2px solid var(--primary)';
                     
                     // Update main image
                     mainImage.src = this.dataset.image;

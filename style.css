@@ -398,6 +398,86 @@ a:hover {
     border-color: var(--primary);
 }
 
+/* Product Tags Styling */
+.product-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.product-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    background-color: #000000;
+    border: 1px solid #000000;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.product-tag:hover {
+    background-color: #333333;
+    border-color: #333333;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Product Specifications */
+.product-specifications {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.product-specifications h3 {
+    color: var(--foreground);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.specifications-content {
+    width: 100%;
+}
+
+.specs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.specs-table tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.specs-table tr:last-child {
+    border-bottom: none;
+}
+
+.specs-table td {
+    padding: 0.75rem 0;
+    vertical-align: top;
+}
+
+.specs-table td:first-child {
+    font-weight: 500;
+    color: var(--muted-foreground);
+    width: 30%;
+    padding-right: 1rem;
+}
+
+.specs-table td:last-child {
+    color: var(--foreground);
+    font-weight: 400;
+}
+
 /* Product Cards */
 .product-card {
     background-color: var(--card);

@@ -342,9 +342,9 @@ if (isset($_POST['verify_age'])) {
                 <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
                 <p>
                     710 Den Glass<br>
-                    Email: privacy@710denglass.com<br>
-                    Phone: (555) 710-7100<br>
-                    Address: 710 Glass Ave, Smoky Hills, CO 80420
+                    Email: andrew@710denglass.com<br>
+                    Phone: 408-529-5712<br>
+                    Address: San Diego, CA 92101
                 </p>
             </div>
         </div>

@@ -471,9 +471,9 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         
         .checkout-form .form-control,
         .checkout-form .form-select {
-            background-color: var(--dark-surface-1);
+            background-color: white;
             border-color: var(--border-color);
-            color: white;
+            color: black;
             padding: 0.75rem 1rem;
         }
         
@@ -481,6 +481,11 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         .checkout-form .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(30, 136, 229, 0.25);
+        }
+        
+        .checkout-form .form-control::placeholder {
+            color: #6c757d;
+            opacity: 1;
         }
         
         .checkout-form label {
@@ -645,59 +650,6 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                 <?php else: ?>
                 <a href="login.php" class="btn-icon" title="Login / Register"><i class="bi bi-person-circle"></i></a>
                 <?php endif; ?>
-            </div>
-        </div>
-    </nav>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            Shop
-                        </a>
-                        <ul class="dropdown-menu dark-dropdown">
-                            <?php foreach ($categories as $category): ?>
-                            <li>
-                                <a class="dropdown-item" href="index.php?category=<?php echo $category['category_id']; ?>">
-                                    <?php echo $category['name']; ?>
-                                </a>
-                            </li>
-                            <?php endforeach; ?>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="index.php">All Products</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.php">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">Contact</a>
-                    </li>
-                </ul>
-                <div class="nav-btns">
-                    <?php if ($is_logged_in): ?>
-                    <div class="dropdown">
-                        <a href="#" class="btn btn-icon" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-fill"></i>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end dark-dropdown">
-                            <li><span class="dropdown-item-text">Hello, <?php echo htmlspecialchars($username); ?></span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <?php if ($is_admin): ?>
-                            <li><a class="dropdown-item" href="backend.php"><i class="bi bi-gear me-2"></i> Admin Dashboard</a></li>
-                            <?php endif; ?>
-                            <li><a class="dropdown-item" href="account.php"><i class="bi bi-person me-2"></i> My Account</a></li>
-                            <li><a class="dropdown-item" href="orders.php"><i class="bi bi-box me-2"></i> My Orders</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="index.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
-                        </ul>
-                    </div>
-                    <?php else: ?>
-                    <a href="login.php" class="btn btn-icon" title="Login / Register">
-                        <i class="bi bi-person-circle"></i>
-                    </a>
-                    <?php endif; ?>
-                </div>
             </div>
         </div>
     </nav>

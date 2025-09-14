@@ -45,7 +45,7 @@ CREATE TABLE products (
     featured BOOLEAN DEFAULT 0,
     sku VARCHAR(50) UNIQUE,
     weight DECIMAL(10, 2), -- Consider units (e.g., kg or lbs) in comments or app logic
-    dimensions VARCHAR(50), -- e.g., "10in H x 4in W"
+    dimensions VARCHAR(255), -- e.g., "10in H x 4in W"
     material VARCHAR(100),
     color VARCHAR(100), -- Ensuring this is VARCHAR(100)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,6 +63,20 @@ CREATE TABLE product_images (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add a trigger to enforce maximum 5 images per product
+DELIMITER $$
+CREATE TRIGGER limit_product_images_before_insert
+    BEFORE INSERT ON product_images
+    FOR EACH ROW
+BEGIN
+    DECLARE img_count INT;
+    SELECT COUNT(*) INTO img_count FROM product_images WHERE product_id = NEW.product_id;
+    IF img_count >= 5 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Maximum 5 images allowed per product';
+    END IF;
+END$$
+DELIMITER ;
 
 -- Product Tags table for filtering
 CREATE TABLE tags (
@@ -272,4 +286,19 @@ SELECT
     SUM(tokens_used) as total_tokens_used
 FROM chat_interactions 
 GROUP BY DATE(created_at)
-ORDER BY chat_date DESC; 
+ORDER BY chat_date DESC;
+
+-- Contact Messages table
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    is_read BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_created_at (created_at),
+    INDEX idx_is_read (is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 

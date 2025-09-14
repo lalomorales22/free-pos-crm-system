@@ -91,6 +91,7 @@ $admin_user = null; $user_data = null; $parent_categories_list = [];
 
 // --- LOGIC SECTION ---
 if ($action === 'dashboard') {
+    // Basic counts
     $product_count_res = $conn->query("SELECT COUNT(*) as count FROM products");
     $product_count = $product_count_res ? $product_count_res->fetch_assoc()['count'] : 0;
     $category_count_res = $conn->query("SELECT COUNT(*) as count FROM categories");
@@ -99,6 +100,41 @@ if ($action === 'dashboard') {
     $order_count = $order_count_res ? $order_count_res->fetch_assoc()['count'] : 0;
     $user_count_res = $conn->query("SELECT COUNT(*) as count FROM users");
     $user_count = $user_count_res ? $user_count_res->fetch_assoc()['count'] : 0;
+    $message_count_res = $conn->query("SELECT COUNT(*) as count FROM contact_messages");
+    $message_count = $message_count_res ? $message_count_res->fetch_assoc()['count'] : 0;
+    $unread_message_count_res = $conn->query("SELECT COUNT(*) as count FROM contact_messages WHERE is_read = 0");
+    $unread_message_count = $unread_message_count_res ? $unread_message_count_res->fetch_assoc()['count'] : 0;
+    
+    // Advanced analytics
+    $total_revenue_res = $conn->query("SELECT SUM(total_amount) as total FROM orders WHERE payment_status = 'paid'");
+    $total_revenue = $total_revenue_res ? ($total_revenue_res->fetch_assoc()['total'] ?? 0) : 0;
+    
+    $monthly_revenue_res = $conn->query("SELECT SUM(total_amount) as total FROM orders WHERE payment_status = 'paid' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    $monthly_revenue = $monthly_revenue_res ? ($monthly_revenue_res->fetch_assoc()['total'] ?? 0) : 0;
+    
+    $pending_orders_res = $conn->query("SELECT COUNT(*) as count FROM orders WHERE order_status IN ('pending', 'processing')");
+    $pending_orders = $pending_orders_res ? $pending_orders_res->fetch_assoc()['count'] : 0;
+    
+    $low_stock_res = $conn->query("SELECT COUNT(*) as count FROM products WHERE quantity <= 5 AND quantity > 0");
+    $low_stock_count = $low_stock_res ? $low_stock_res->fetch_assoc()['count'] : 0;
+    
+    $out_of_stock_res = $conn->query("SELECT COUNT(*) as count FROM products WHERE quantity = 0");
+    $out_of_stock_count = $out_of_stock_res ? $out_of_stock_res->fetch_assoc()['count'] : 0;
+    
+    // Recent activity
+    $recent_orders_res = $conn->query("SELECT o.*, u.username FROM orders o LEFT JOIN users u ON o.user_id = u.user_id ORDER BY o.created_at DESC LIMIT 5");
+    $recent_orders = $recent_orders_res ? $recent_orders_res->fetch_all(MYSQLI_ASSOC) : [];
+    
+    $recent_messages_res = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 5");
+    $recent_messages = $recent_messages_res ? $recent_messages_res->fetch_all(MYSQLI_ASSOC) : [];
+    
+    // Top products
+    $top_products_res = $conn->query("SELECT p.name, SUM(oi.quantity) as sold_qty, SUM(oi.price_at_purchase * oi.quantity) as revenue FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN orders o ON oi.order_id = o.order_id WHERE o.payment_status = 'paid' GROUP BY p.product_id ORDER BY sold_qty DESC LIMIT 5");
+    $top_products = $top_products_res ? $top_products_res->fetch_all(MYSQLI_ASSOC) : [];
+    
+    // Sales by status
+    $order_status_res = $conn->query("SELECT order_status, COUNT(*) as count FROM orders GROUP BY order_status");
+    $order_status_data = $order_status_res ? $order_status_res->fetch_all(MYSQLI_ASSOC) : [];
 }
 elseif ($action === 'products') {
     $result = $conn->query("SELECT p.*, c.name as category_name, 
@@ -444,6 +480,30 @@ elseif ($action === 'edit_product') {
                     $stmt_tag->close();
                 }
                 if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
+                    // Check current image count
+                    $current_image_count = 0;
+                    if ($current_product_id > 0) {
+                        $count_res = $conn->query("SELECT COUNT(*) as count FROM product_images WHERE product_id = $current_product_id");
+                        if ($count_res) {
+                            $current_image_count = $count_res->fetch_assoc()['count'];
+                        }
+                    }
+                    
+                    // Count new images to upload
+                    $new_images_count = 0;
+                    foreach ($_FILES['images']['name'] as $index => $name) {
+                        if (!empty($name) && $_FILES['images']['error'][$index] === UPLOAD_ERR_OK) {
+                            $new_images_count++;
+                        }
+                    }
+                    
+                    // Check if total would exceed 5 images
+                    if ($current_image_count + $new_images_count > 5) {
+                        $_SESSION['flash_error'] = "Cannot upload " . $new_images_count . " images. Product already has " . $current_image_count . " images. Maximum 5 images allowed per product.";
+                        header("Location: backend.php?action=edit_product&id=" . $product_id);
+                        exit;
+                    }
+                    
                     $has_primary_image = false;
                     if ($current_product_id > 0) {
                         $check_primary_res = $conn->query("SELECT COUNT(*) as count FROM product_images WHERE product_id = $current_product_id AND is_primary = 1");
@@ -866,6 +926,36 @@ elseif ($action === 'view_order') {
         $_SESSION['flash_error'] = "Invalid Order ID.";
     }
 }
+elseif ($action === 'delete_order') {
+    $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    if ($order_id > 0) {
+        // Start transaction to ensure data integrity
+        $conn->begin_transaction();
+        try {
+            // First delete order items
+            $delete_items_stmt = $conn->prepare("DELETE FROM order_items WHERE order_id = ?");
+            $delete_items_stmt->bind_param("i", $order_id);
+            $delete_items_stmt->execute();
+            $delete_items_stmt->close();
+            
+            // Then delete the order
+            $delete_order_stmt = $conn->prepare("DELETE FROM orders WHERE order_id = ?");
+            $delete_order_stmt->bind_param("i", $order_id);
+            $delete_order_stmt->execute();
+            $delete_order_stmt->close();
+            
+            $conn->commit();
+            $_SESSION['flash_message'] = "Order #$order_id has been successfully deleted.";
+        } catch (Exception $e) {
+            $conn->rollback();
+            $_SESSION['flash_error'] = "Error deleting order: " . $e->getMessage();
+        }
+    } else {
+        $_SESSION['flash_error'] = "Invalid order ID.";
+    }
+    header('Location: backend.php?action=orders');
+    exit;
+}
 elseif ($action === 'users') {
     $result = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
     $users = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -1010,22 +1100,332 @@ elseif ($action === 'admin_profile') {
         $_SESSION['flash_error'] = "No admin user session found.";
     }
 }
+elseif ($action === 'contact_messages') {
+    // Handle marking messages as read/unread
+    if (isset($_GET['mark_read']) && $_GET['mark_read'] > 0) {
+        $message_id = intval($_GET['mark_read']);
+        $conn->query("UPDATE contact_messages SET is_read = 1 WHERE id = $message_id");
+        $_SESSION['flash_message'] = "Message marked as read.";
+        header('Location: backend.php?action=contact_messages');
+        exit;
+    }
+    
+    if (isset($_GET['mark_unread']) && $_GET['mark_unread'] > 0) {
+        $message_id = intval($_GET['mark_unread']);
+        $conn->query("UPDATE contact_messages SET is_read = 0 WHERE id = $message_id");
+        $_SESSION['flash_message'] = "Message marked as unread.";
+        header('Location: backend.php?action=contact_messages');
+        exit;
+    }
+    
+    // Handle deleting messages
+    if (isset($_GET['delete']) && $_GET['delete'] > 0) {
+        $message_id = intval($_GET['delete']);
+        $conn->query("DELETE FROM contact_messages WHERE id = $message_id");
+        $_SESSION['flash_message'] = "Message deleted.";
+        header('Location: backend.php?action=contact_messages');
+        exit;
+    }
+    
+    // Get all contact messages
+    $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+    $where_clause = '';
+    if ($filter === 'unread') {
+        $where_clause = 'WHERE is_read = 0';
+    } elseif ($filter === 'read') {
+        $where_clause = 'WHERE is_read = 1';
+    }
+    
+    $result = $conn->query("SELECT * FROM contact_messages $where_clause ORDER BY created_at DESC");
+    $contact_messages = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    
+    // Get counts for filter badges
+    $unread_count_res = $conn->query("SELECT COUNT(*) as count FROM contact_messages WHERE is_read = 0");
+    $unread_count = $unread_count_res ? $unread_count_res->fetch_assoc()['count'] : 0;
+    
+    $total_count_res = $conn->query("SELECT COUNT(*) as count FROM contact_messages");
+    $total_count = $total_count_res ? $total_count_res->fetch_assoc()['count'] : 0;
+}
 elseif ($action === 'admin_settings') {
     // Placeholder
 }
 
 // --- HTML GENERATION SECTION ---
 $html_head = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>710 Den Glass - Admin Dashboard</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"><style>:root{--primary-color:#6c3483;--secondary-color:#9b59b6;--dark-bg:#121212;--dark-surface:#1e1e1e;--dark-surface-2:#2d2d2d;--text-color:#e0e0e0;--muted-text:#a0a0a0;--border-color:#333;--success-color:#2ecc71;--warning-color:#f39c12;--danger-color:#e74c3c;--info-color:#3498db;}body{background-color:var(--dark-bg);color:var(--text-color);font-family:"Segoe UI",Roboto,"Helvetica Neue",sans-serif;}.sidebar{background-color:var(--dark-surface);min-height:100vh;border-right:1px solid var(--border-color);padding-top:20px;}.sidebar .nav-link{color:var(--muted-text);border-radius:0;padding:12px 20px;margin-bottom:5px;transition:background-color .2s,color .2s;}.sidebar .nav-link:hover,.sidebar .nav-link.active{background-color:var(--dark-surface-2);color:var(--text-color);}.sidebar .nav-link i{margin-right:10px;}.main-content{padding:30px;}.card{background-color:var(--dark-surface);border:1px solid var(--border-color);border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,.2);}.card-header{background-color:var(--dark-surface-2);border-bottom:1px solid var(--border-color);padding:15px 20px;}.table{color:var(--text-color);}.table thead th{border-bottom:2px solid var(--border-color);border-top:none;background-color:var(--dark-surface-2);}.table td,.table th{border-color:var(--border-color);vertical-align:middle;}.alert-success{background-color:rgba(46,204,113,.1);border-color:var(--success-color);color:var(--success-color);}.alert-danger{background-color:rgba(231,76,60,.1);border-color:var(--danger-color);color:var(--danger-color);}.alert-info{background-color:rgba(52,152,219,.1);border-color:var(--info-color);color:var(--info-color);}.form-control,.form-select{background-color:var(--dark-surface-2);border:1px solid var(--border-color);color:var(--text-color);}.form-control:focus,.form-select:focus{background-color:var(--dark-surface-2);color:var(--text-color);border-color:var(--secondary-color);box-shadow:0 0 0 .25rem rgba(155,89,182,.25);}.form-check-input:checked{background-color:var(--primary-color);border-color:var(--primary-color);}.btn-primary{background-color:var(--primary-color);border-color:var(--primary-color);}.btn-primary:hover{background-color:var(--secondary-color);border-color:var(--secondary-color);}.btn-outline-primary{color:var(--primary-color);border-color:var(--primary-color);}.btn-outline-primary:hover{background-color:var(--primary-color);color:#fff;border-color:var(--primary-color);}.btn-success{background-color:var(--success-color);border-color:var(--success-color);}.btn-info{background-color:var(--info-color);border-color:var(--info-color);}.btn-warning{background-color:var(--warning-color);border-color:var(--warning-color);}.btn-danger{background-color:var(--danger-color);border-color:var(--danger-color);}.dashboard-stats .card:hover{transform:translateY(-5px);box-shadow:0 5px 15px rgba(0,0,0,.3);}.dashboard-stats .stat-icon{font-size:2.5rem;opacity:.8;}.dashboard-stats .stat-value{font-size:2rem;font-weight:700;}.dashboard-stats .stat-label{font-size:1rem;color:var(--muted-text);}.product-img{width:60px;height:60px;object-fit:cover;border-radius:5px;border:1px solid var(--border-color);}.category-badge{background-color:var(--primary-color);color:#fff;padding:.25em .6em;border-radius:10px;font-size:.8rem;}.order-status{font-weight:700;padding:5px 10px;border-radius:20px;font-size:.8rem;text-align:center;color:#fff;}.status-pending{background-color:var(--warning-color);}.status-processing{background-color:var(--info-color);}.status-shipped{background-color:var(--success-color);}.status-delivered{background-color:#1abc9c}.status-canceled{background-color:var(--danger-color);}.top-bar{background-color:var(--dark-surface);border-bottom:1px solid var(--border-color);padding:10px 30px;}.brand-logo{font-size:1.5rem;font-weight:700;color:var(--text-color);}.brand-logo span{color:var(--primary-color);}.user-dropdown .dropdown-toggle{color:var(--muted-text);}.user-dropdown .dropdown-toggle:hover{color:var(--text-color);}.dropdown-menu{background-color:var(--dark-surface-2);border:1px solid var(--border-color);}.dropdown-item{color:var(--text-color);}.dropdown-item:focus,.dropdown-item:hover{background-color:var(--primary-color);color:#fff;}.dropdown-divider{border-top-color:var(--border-color);}.product-image-card{position:relative;border:1px solid var(--border-color);border-radius:4px;overflow:hidden;background-color:var(--dark-surface-2);margin-bottom:1rem}.product-image-card .product-image{width:100%;height:120px;object-fit:cover;display:block}.product-image-card .image-actions{padding:10px;text-align:center}.product-image-card .image-actions .btn{display:block;width:100%;margin-bottom:5px}.product-image-card .image-actions .badge{display:block;width:100%;margin-bottom:5px;padding:.5em}</style></head><body>';
-$html_nav = '<div class="container-fluid"><div class="row"><div class="col-md-2 px-0 sidebar"><div class="text-center my-4"><h5 class="brand-logo">710 <span>Den</span> Glass</h5><div class="text-muted small">Admin Dashboard</div></div><ul class="nav flex-column"><li class="nav-item"><a class="nav-link ' . ($action === 'dashboard' ? 'active' : '') . '" href="backend.php?action=dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['products', 'edit_product', 'export_products_csv', 'import_products_csv']) ? 'active' : '') . '" href="backend.php?action=products"><i class="bi bi-box-seam"></i> Products</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['categories', 'edit_category']) ? 'active' : '') . '" href="backend.php?action=categories"><i class="bi bi-list-nested"></i> Categories</a></li><li class="nav-item"><a class="nav-link ' . ($action === 'tags' ? 'active' : '') . '" href="backend.php?action=tags"><i class="bi bi-tags"></i> Tags</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['orders', 'view_order']) ? 'active' : '') . '" href="backend.php?action=orders"><i class="bi bi-cart3"></i> Orders</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['users', 'edit_user']) ? 'active' : '') . '" href="backend.php?action=users"><i class="bi bi-people"></i> Users</a></li><li class="nav-item"><a class="nav-link ' . ($action === 'admin_settings' ? 'active' : '') . '" href="backend.php?action=admin_settings"><i class="bi bi-gear"></i> Admin Settings</a></li><li class="nav-item mt-auto mb-3 mx-2"><a class="nav-link" href="logout.php" style="background-color: var(--dark-surface-2); border-radius: 5px;"><i class="bi bi-box-arrow-left"></i> Logout</a></li></ul></div><div class="col-md-10 px-0"><div class="top-bar d-flex justify-content-between align-items-center"><h4 class="mb-0 ms-3">' . ucfirst(str_replace('_', ' ', $action)) . '</h4><div class="user-dropdown dropdown me-3"><div class="d-flex align-items-center dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-circle fs-4 me-2"></i> Admin <i class="bi bi-caret-down-fill ms-1 small"></i></div><ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="backend.php?action=admin_profile"><i class="bi bi-person me-2"></i> Profile</a></li><li><a class="dropdown-item" href="backend.php?action=admin_settings"><i class="bi bi-gear me-2"></i> Settings</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-left me-2"></i> Logout</a></li></ul></div></div><div class="main-content">' . (!empty($message) ? '<div class="alert alert-success alert-dismissible fade show" role="alert">' . $message . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '') . (!empty($error) ? '<div class="alert alert-danger alert-dismissible fade show" role="alert">' . $error . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '') . '';
+$html_nav = '<div class="container-fluid"><div class="row"><div class="col-md-2 px-0 sidebar"><div class="text-center my-4"><h5 class="brand-logo">710 <span>Den</span> Glass</h5><div class="text-muted small">Admin Dashboard</div></div><ul class="nav flex-column"><li class="nav-item"><a class="nav-link ' . ($action === 'dashboard' ? 'active' : '') . '" href="backend.php?action=dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['products', 'edit_product', 'export_products_csv', 'import_products_csv']) ? 'active' : '') . '" href="backend.php?action=products"><i class="bi bi-box-seam"></i> Products</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['categories', 'edit_category']) ? 'active' : '') . '" href="backend.php?action=categories"><i class="bi bi-list-nested"></i> Categories</a></li><li class="nav-item"><a class="nav-link ' . ($action === 'tags' ? 'active' : '') . '" href="backend.php?action=tags"><i class="bi bi-tags"></i> Tags</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['orders', 'view_order']) ? 'active' : '') . '" href="backend.php?action=orders"><i class="bi bi-cart3"></i> Orders</a></li><li class="nav-item"><a class="nav-link ' . (in_array($action, ['users', 'edit_user']) ? 'active' : '') . '" href="backend.php?action=users"><i class="bi bi-people"></i> Users</a></li><li class="nav-item"><a class="nav-link ' . ($action === 'contact_messages' ? 'active' : '') . '" href="backend.php?action=contact_messages"><i class="bi bi-envelope"></i> Contact Messages</a></li><li class="nav-item mt-auto mb-3 mx-2"><a class="nav-link" href="logout.php" style="background-color: var(--dark-surface-2); border-radius: 5px;"><i class="bi bi-box-arrow-left"></i> Logout</a></li></ul></div><div class="col-md-10 px-0"><div class="top-bar d-flex justify-content-between align-items-center"><h4 class="mb-0 ms-3">' . ucfirst(str_replace('_', ' ', $action)) . '</h4><div class="user-dropdown dropdown me-3"><div class="d-flex align-items-center dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-circle fs-4 me-2"></i> Admin <i class="bi bi-caret-down-fill ms-1 small"></i></div><ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="backend.php?action=admin_profile"><i class="bi bi-person me-2"></i> Profile</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-left me-2"></i> Logout</a></li></ul></div></div><div class="main-content">' . (!empty($message) ? '<div class="alert alert-success alert-dismissible fade show" role="alert">' . $message . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '') . (!empty($error) ? '<div class="alert alert-danger alert-dismissible fade show" role="alert">' . $error . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '') . '';
 $html_content = ''; // Reset for action-specific content
 
 // --- Action Specific HTML Content (with null coalescing and other fixes) ---
 if ($action === 'dashboard') {
-    $html_content .= '<div class="row dashboard-stats">
-        <div class="col-md-3 mb-4"><div class="card text-center"><div class="card-body"><div class="stat-icon text-primary"><i class="bi bi-box-seam"></i></div><div class="stat-value">' . $product_count . '</div><div class="stat-label">Products</div></div></div></div>
-        <div class="col-md-3 mb-4"><div class="card text-center"><div class="card-body"><div class="stat-icon text-success"><i class="bi bi-list-nested"></i></div><div class="stat-value">' . $category_count . '</div><div class="stat-label">Categories</div></div></div></div>
-        <div class="col-md-3 mb-4"><div class="card text-center"><div class="card-body"><div class="stat-icon text-warning"><i class="bi bi-cart3"></i></div><div class="stat-value">' . $order_count . '</div><div class="stat-label">Orders</div></div></div></div>
-        <div class="col-md-3 mb-4"><div class="card text-center"><div class="card-body"><div class="stat-icon text-info"><i class="bi bi-people"></i></div><div class="stat-value">' . $user_count . '</div><div class="stat-label">Users</div></div></div></div>
+    $html_content .= '
+    <!-- Key Metrics Row -->
+    <div class="row dashboard-stats mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-success"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="stat-value">$' . number_format($total_revenue, 2) . '</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <small class="text-muted">All time</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-primary"><i class="bi bi-graph-up"></i></div>
+                    <div class="stat-value">$' . number_format($monthly_revenue, 2) . '</div>
+                    <div class="stat-label">Monthly Revenue</div>
+                    <small class="text-muted">Last 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-warning"><i class="bi bi-cart3"></i></div>
+                    <div class="stat-value">' . $order_count . '</div>
+                    <div class="stat-label">Total Orders</div>
+                    <small class="text-warning">' . $pending_orders . ' pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-info"><i class="bi bi-people"></i></div>
+                    <div class="stat-value">' . $user_count . '</div>
+                    <div class="stat-label">Customers</div>
+                    <small class="text-muted">Registered users</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Secondary Metrics Row -->
+    <div class="row dashboard-stats mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-primary"><i class="bi bi-box-seam"></i></div>
+                    <div class="stat-value">' . $product_count . '</div>
+                    <div class="stat-label">Products</div>
+                    <small class="text-muted">' . $category_count . ' categories</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="stat-value">' . $low_stock_count . '</div>
+                    <div class="stat-label">Low Stock</div>
+                    <small class="text-danger">' . $out_of_stock_count . ' out of stock</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-info"><i class="bi bi-envelope"></i></div>
+                    <div class="stat-value">' . $message_count . '</div>
+                    <div class="stat-label">Messages</div>
+                    <small class="text-warning">' . $unread_message_count . ' unread</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-icon text-success"><i class="bi bi-check-circle"></i></div>
+                    <div class="stat-value">' . number_format(($total_revenue / max($order_count, 1)), 2) . '</div>
+                    <div class="stat-label">Avg Order Value</div>
+                    <small class="text-muted">Per order</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analytics Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Top Selling Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>';
+    
+    if (!empty($top_products)) {
+        foreach ($top_products as $product) {
+            $html_content .= '<tr>
+                <td>' . htmlspecialchars($product['name']) . '</td>
+                <td><span class="badge bg-primary">' . $product['sold_qty'] . '</span></td>
+                <td>$' . number_format($product['revenue'], 2) . '</td>
+            </tr>';
+        }
+    } else {
+        $html_content .= '<tr><td colspan="3" class="text-center text-muted">No sales data available</td></tr>';
+    }
+    
+    $html_content .= '
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0"><i class="bi bi-pie-chart me-2"></i>Order Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                    <th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>';
+    
+    if (!empty($order_status_data)) {
+        foreach ($order_status_data as $status) {
+            $percentage = $order_count > 0 ? round(($status['count'] / $order_count) * 100, 1) : 0;
+            $status_class = '';
+            switch ($status['order_status']) {
+                case 'pending': $status_class = 'warning'; break;
+                case 'processing': $status_class = 'info'; break;
+                case 'shipped': $status_class = 'primary'; break;
+                case 'delivered': $status_class = 'success'; break;
+                case 'canceled': $status_class = 'danger'; break;
+                default: $status_class = 'secondary';
+            }
+            
+            $html_content .= '<tr>
+                <td><span class="badge bg-' . $status_class . '">' . ucfirst($status['order_status']) . '</span></td>
+                <td>' . $status['count'] . '</td>
+                <td>' . $percentage . '%</td>
+            </tr>';
+        }
+    } else {
+        $html_content .= '<tr><td colspan="3" class="text-center text-muted">No order data available</td></tr>';
+    }
+    
+    $html_content .= '
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0"><i class="bi bi-clock me-2"></i>Recent Orders</h6>
+                    <a href="backend.php?action=orders" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>';
+    
+    if (!empty($recent_orders)) {
+        foreach ($recent_orders as $order) {
+            $status_class = '';
+            switch ($order['order_status']) {
+                case 'pending': $status_class = 'warning'; break;
+                case 'processing': $status_class = 'info'; break;
+                case 'shipped': $status_class = 'primary'; break;
+                case 'delivered': $status_class = 'success'; break;
+                case 'canceled': $status_class = 'danger'; break;
+                default: $status_class = 'secondary';
+            }
+            
+            $html_content .= '<tr>
+                <td><a href="backend.php?action=view_order&id=' . $order['order_id'] . '">#' . $order['order_id'] . '</a></td>
+                <td>' . htmlspecialchars($order['username'] ?? 'Guest') . '</td>
+                <td>$' . number_format($order['total_amount'], 2) . '</td>
+                <td><span class="badge bg-' . $status_class . '">' . ucfirst($order['order_status']) . '</span></td>
+            </tr>';
+        }
+    } else {
+        $html_content .= '<tr><td colspan="4" class="text-center text-muted">No recent orders</td></tr>';
+    }
+    
+    $html_content .= '
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0"><i class="bi bi-envelope me-2"></i>Recent Messages</h6>
+                    <a href="backend.php?action=contact_messages" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>From</th>
+                                    <th>Subject</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>';
+    
+    if (!empty($recent_messages)) {
+        foreach ($recent_messages as $msg) {
+            $status_icon = $msg['is_read'] ? '<i class="bi bi-envelope-open text-muted"></i>' : '<i class="bi bi-envelope-fill text-primary"></i>';
+            $html_content .= '<tr>
+                <td>' . htmlspecialchars($msg['name']) . '</td>
+                <td>' . htmlspecialchars(substr($msg['subject'], 0, 30)) . (strlen($msg['subject']) > 30 ? '...' : '') . '</td>
+                <td>' . date('M d', strtotime($msg['created_at'])) . '</td>
+                <td>' . $status_icon . '</td>
+            </tr>';
+        }
+    } else {
+        $html_content .= '<tr><td colspan="4" class="text-center text-muted">No recent messages</td></tr>';
+    }
+    
+    $html_content .= '
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>';
 }
 elseif ($action === 'products') {
@@ -1069,7 +1469,15 @@ elseif ($action === 'edit_product') {
     <div class="row"><div class="col-md-4 mb-3"><label for="price" class="form-label">Regular Price ($) <span class="text-danger">*</span></label><input type="number" class="form-control" id="price" name="price" step="0.01" value="' . htmlspecialchars($product['price'] ?? '') . '" required></div><div class="col-md-4 mb-3"><label for="sale_price" class="form-label">Sale Price ($)</label><input type="number" class="form-control" id="sale_price" name="sale_price" step="0.01" value="' . htmlspecialchars($product['sale_price'] ?? '') . '"></div><div class="col-md-4 mb-3"><label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label><input type="number" class="form-control" id="quantity" name="quantity" value="' . htmlspecialchars($product['quantity'] ?? '0') . '" required></div></div>
     <div class="row"><div class="col-md-6 mb-3"><label for="sku" class="form-label">SKU</label><input type="text" class="form-control" id="sku" name="sku" value="' . htmlspecialchars($product['sku'] ?? '') . '"></div><div class="col-md-6 mb-3"><label for="category_id" class="form-label">Category <span class="text-danger">*</span></label><select class="form-select" id="category_id" name="category_id" required><option value="">Select Category</option>';
     foreach ($categories as $cat) { $selected = (isset($product['category_id']) && $product['category_id'] == $cat['category_id']) ? 'selected' : ''; $html_content .= '<option value="' . $cat['category_id'] . '" ' . $selected . '>' . htmlspecialchars($cat['name']) . '</option>'; }
-    $html_content .= '</select></div></div><div class="mb-3"><label for="images" class="form-label">Upload New Images</label><input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*"><small class="text-muted">Newly uploaded images will be added. First new image becomes primary if no primary is set.</small></div>';
+    $current_image_count = 0;
+    if (!$is_new_product && isset($product['product_id'])) {
+        $count_res = $conn->query("SELECT COUNT(*) as count FROM product_images WHERE product_id = " . intval($product['product_id']));
+        if ($count_res) {
+            $current_image_count = $count_res->fetch_assoc()['count'];
+        }
+    }
+    $remaining_slots = 5 - $current_image_count;
+    $html_content .= '</select></div></div><div class="mb-3"><label for="images" class="form-label">Upload New Images</label><input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*" ' . ($remaining_slots <= 0 ? 'disabled' : '') . '><small class="text-muted">Maximum 5 images per product. Current: ' . $current_image_count . '/5. ' . ($remaining_slots > 0 ? 'You can upload ' . $remaining_slots . ' more image(s).' : 'Maximum reached - remove images to add new ones.') . '</small></div>';
     if (!$is_new_product && !empty($product['images'])) {
         $html_content .= '<h6>Current Images</h6><div class="row">';
         foreach ($product['images'] as $img) {
@@ -1078,7 +1486,37 @@ elseif ($action === 'edit_product') {
     }
     $html_content .= '</div> <div class="col-md-4"><div class="card mb-3 bg-dark-surface-2"><div class="card-body"><h6 class="card-title">Publish</h6><hr><div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="featured" name="featured" ' . (isset($product['featured']) && $product['featured'] ? 'checked' : '') . '><label class="form-check-label" for="featured">Featured Product</label></div><button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> ' . ($is_new_product ? 'Add Product' : 'Update Product') . '</button>' . (!$is_new_product ? '<a href="backend.php?action=delete_product&id=' . ($product['product_id'] ?? '') . '" class="btn btn-danger w-100 mt-2" onclick="return confirm(\'Delete this product?\')"><i class="bi bi-trash"></i> Delete Product</a>' : '') . '<a href="backend.php?action=products" class="btn btn-outline-secondary w-100 mt-2">Cancel</a></div></div><div class="card mb-3 bg-dark-surface-2"><div class="card-body"><h6 class="card-title">Tags</h6><hr>';
     if (!empty($tags)) { foreach ($tags as $tag) { $checked = isset($product['tags']) && in_array($tag['tag_id'], $product['tags']) ? 'checked' : ''; $html_content .= '<div class="form-check mb-1"><input class="form-check-input" type="checkbox" id="tag_' . $tag['tag_id'] . '" name="tags[]" value="' . $tag['tag_id'] . '" ' . $checked . '><label class="form-check-label" for="tag_' . $tag['tag_id'] . '">' . htmlspecialchars($tag['name']) . '</label></div>'; } } else { $html_content .= '<p class="small text-muted">No tags defined.</p>'; }
-    $html_content .= '<a href="backend.php?action=tags" class="btn btn-sm btn-outline-light mt-2"><i class="bi bi-plus-circle"></i> Manage Tags</a></div></div><div class="card bg-dark-surface-2"><div class="card-body"><h6 class="card-title">Additional Details</h6><hr><div class="mb-3"><label for="weight" class="form-label">Weight (lbs)</label><input type="number" class="form-control form-control-sm" id="weight" name="weight" step="0.01" value="' . htmlspecialchars($product['weight'] ?? '') . '"></div><div class="mb-3"><label for="dimensions" class="form-label">Dimensions (LxWxH)</label><input type="text" class="form-control form-control-sm" id="dimensions" name="dimensions" value="' . htmlspecialchars($product['dimensions'] ?? '') . '"></div><div class="mb-3"><label for="material" class="form-label">Material</label><input type="text" class="form-control form-control-sm" id="material" name="material" value="' . htmlspecialchars($product['material'] ?? '') . '"></div><div class="mb-0"><label for="color" class="form-label">Color</label><input type="text" class="form-control form-control-sm" id="color" name="color" value="' . htmlspecialchars($product['color'] ?? '') . '"></div></div></div></div></div></form></div></div>';
+    $html_content .= '<a href="backend.php?action=tags" class="btn btn-sm btn-outline-light mt-2"><i class="bi bi-plus-circle"></i> Manage Tags</a>
+                      </div>
+                  </div>
+                  
+                  <div class="card bg-dark-surface-2">
+                      <div class="card-body">
+                          <h6 class="card-title">Additional Details <small class="text-muted">(Optional)</small></h6>
+                          <hr>
+                          <div class="mb-3">
+                              <label for="weight" class="form-label">Weight (lbs)</label>
+                              <input type="number" class="form-control form-control-sm" id="weight" name="weight" step="0.01" value="' . htmlspecialchars($product['weight'] ?? '') . '" placeholder="e.g., 0.5">
+                          </div>
+                          <div class="mb-3">
+                              <label for="dimensions" class="form-label">Dimensions</label>
+                              <input type="text" class="form-control form-control-sm" id="dimensions" name="dimensions" maxlength="255" value="' . htmlspecialchars($product['dimensions'] ?? '') . '" placeholder="e.g., 10in H x 4in W x 3in D">
+                          </div>
+                          <div class="mb-3">
+                              <label for="material" class="form-label">Material</label>
+                              <input type="text" class="form-control form-control-sm" id="material" name="material" value="' . htmlspecialchars($product['material'] ?? '') . '" placeholder="e.g., Borosilicate Glass">
+                          </div>
+                          <div class="mb-0">
+                              <label for="color" class="form-label">Color</label>
+                              <input type="text" class="form-control form-control-sm" id="color" name="color" value="' . htmlspecialchars($product['color'] ?? '') . '" placeholder="e.g., Clear, Blue, etc.">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </form>
+  </div>
+</div>';
 }
 elseif ($action === 'categories') {
     $html_content .= '<div class="card"><div class="card-header d-flex justify-content-between align-items-center"><h5 class="card-title mb-0">Categories List</h5><a href="backend.php?action=edit_category" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add New Category</a></div><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Image</th><th>Name</th><th>Parent Category</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
@@ -1101,7 +1539,7 @@ elseif ($action === 'tags') {
 }
 elseif ($action === 'orders') {
     $html_content .= '<div class="card"><div class="card-header"><h5 class="card-title mb-0">Orders List</h5></div><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
-    if(!empty($orders)){ foreach($orders as $o){ $html_content .= '<tr><td>#' . ($o['order_id'] ?? '') . '</td><td>' . htmlspecialchars($o['username'] ?? 'N/A') . '</td><td>' . date('M d, Y H:i', strtotime($o['created_at'] ?? time())) . '</td><td>$' . number_format($o['total_amount'] ?? 0, 2) . '</td><td><span class="order-status status-' . htmlspecialchars(strtolower($o['order_status'] ?? 'pending')) . '">' . ucfirst(htmlspecialchars($o['order_status'] ?? 'Pending')) . '</span></td><td><a href="backend.php?action=view_order&id=' . ($o['order_id'] ?? '') . '" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a></td></tr>'; } } else { $html_content .= '<tr><td colspan="6" class="text-center">No orders found.</td></tr>'; }
+    if(!empty($orders)){ foreach($orders as $o){ $html_content .= '<tr><td>#' . ($o['order_id'] ?? '') . '</td><td>' . htmlspecialchars($o['username'] ?? 'N/A') . '</td><td>' . date('M d, Y H:i', strtotime($o['created_at'] ?? time())) . '</td><td>$' . number_format($o['total_amount'] ?? 0, 2) . '</td><td><span class="order-status status-' . htmlspecialchars(strtolower($o['order_status'] ?? 'pending')) . '">' . ucfirst(htmlspecialchars($o['order_status'] ?? 'Pending')) . '</span></td><td><div class="btn-group"><a href="backend.php?action=view_order&id=' . ($o['order_id'] ?? '') . '" class="btn btn-sm btn-outline-primary" title="View Order"><i class="bi bi-eye"></i></a><a href="backend.php?action=delete_order&id=' . ($o['order_id'] ?? '') . '" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Are you sure you want to delete Order #' . ($o['order_id'] ?? '') . '? This action cannot be undone and will permanently remove the order and all its items.\')" title="Delete Order"><i class="bi bi-trash"></i></a></div></td></tr>'; } } else { $html_content .= '<tr><td colspan="6" class="text-center">No orders found.</td></tr>'; }
     $html_content .= '</tbody></table></div></div></div>';
 }
 elseif ($action === 'view_order') {
@@ -1110,7 +1548,7 @@ elseif ($action === 'view_order') {
         $subtotal = 0; foreach ($order_items as $item) { $item_total = ($item['price'] ?? 0) * ($item['quantity'] ?? 0); $subtotal += $item_total; $image = !empty($item['image']) ? htmlspecialchars($item['image']) : 'uploads/placeholder.jpg'; $html_content .= '<tr><td><img src="'.$image.'" class="product-img me-2" style="width:40px;height:40px;" alt="">' . htmlspecialchars($item['name'] ?? 'N/A') . '<br><small class="text-muted">SKU: ' . htmlspecialchars($item['sku'] ?? 'N/A') . '</small></td><td>$' . number_format($item['price'] ?? 0, 2) . '</td><td>' . ($item['quantity'] ?? 0) . '</td><td>$' . number_format($item_total, 2) . '</td></tr>'; }
         $html_content .= '</tbody><tfoot><tr><td colspan="3" class="text-end"><strong>Subtotal:</strong></td><td>$' . number_format($subtotal, 2) . '</td></tr><tr><td colspan="3" class="text-end"><strong>Shipping:</strong></td><td>$' . number_format(($order['total_amount'] ?? 0) - $subtotal, 2) . '</td></tr><tr><td colspan="3" class="text-end"><strong>Total:</strong></td><td><strong>$' . number_format($order['total_amount'] ?? 0, 2) . '</strong></td></tr></tfoot></table></div><hr><h6>Update Order:</h6><form action="backend.php?action=view_order&id=' . ($order['order_id'] ?? '') . '" method="post"><div class="row align-items-end"><div class="col-md-5 mb-3"><label for="status" class="form-label">Order Status</label><select class="form-select" id="status" name="status">';
         $statuses = ['pending', 'processing', 'shipped', 'delivered', 'canceled']; foreach ($statuses as $s) { $html_content .= '<option value="' . $s . '" ' . (($order['order_status'] ?? '') == $s ? 'selected' : '') . '>' . ucfirst($s) . '</option>'; }
-        $html_content .= '</select></div><div class="col-md-5 mb-3"><label for="tracking_number" class="form-label">Tracking Number</label><input type="text" class="form-control" id="tracking_number" name="tracking_number" value="' . htmlspecialchars($order['tracking_number'] ?? '') . '"></div><div class="col-md-2 mb-3"><button type="submit" class="btn btn-primary w-100">Update</button></div></div></form></div><div class="card-footer text-center"><a href="backend.php?action=orders" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Orders</a></div></div>';
+        $html_content .= '</select></div><div class="col-md-5 mb-3"><label for="tracking_number" class="form-label">Tracking Number</label><input type="text" class="form-control" id="tracking_number" name="tracking_number" value="' . htmlspecialchars($order['tracking_number'] ?? '') . '"></div><div class="col-md-2 mb-3"><button type="submit" class="btn btn-primary w-100">Update</button></div></div></form></div><div class="card-footer text-center"><a href="backend.php?action=orders" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i> Back to Orders</a><a href="backend.php?action=delete_order&id=' . ($order['order_id'] ?? '') . '" class="btn btn-outline-danger" onclick="return confirm(\'Are you sure you want to delete Order #' . ($order['order_id'] ?? '') . '? This action cannot be undone and will permanently remove the order and all its items.\')" title="Delete Order"><i class="bi bi-trash"></i> Delete Order</a></div></div>';
     } else { $html_content .= '<div class="alert alert-danger">Order not found or no ID specified.</div>'; }
 }
 elseif ($action === 'users') {
@@ -1128,8 +1566,124 @@ elseif ($action === 'admin_profile') {
         $html_content .= '<div class="card"><div class="card-header"><h5 class="card-title mb-0">Admin Profile</h5></div><div class="card-body"><form method="POST" action="backend.php?action=admin_profile"><h6>Account Information</h6><div class="row"><div class="col-md-6 mb-3"><label for="username" class="form-label">Username</label><input type="text" class="form-control" id="username" name="username" value="' . htmlspecialchars($admin_user['username'] ?? '') . '" required></div><div class="col-md-6 mb-3"><label for="email" class="form-label">Email</label><input type="email" class="form-control" id="email" name="email" value="' . htmlspecialchars($admin_user['email'] ?? '') . '" required></div></div><div class="row"><div class="col-md-6 mb-3"><label for="first_name" class="form-label">First Name</label><input type="text" class="form-control" id="first_name" name="first_name" value="' . htmlspecialchars($admin_user['first_name'] ?? '') . '"></div><div class="col-md-6 mb-3"><label for="last_name" class="form-label">Last Name</label><input type="text" class="form-control" id="last_name" name="last_name" value="' . htmlspecialchars($admin_user['last_name'] ?? '') . '"></div></div><div class="mb-3"><label for="phone" class="form-label">Phone</label><input type="text" class="form-control" id="phone" name="phone" value="' . htmlspecialchars($admin_user['phone'] ?? '') . '"></div><hr class="my-4"><h6>Change Password</h6><div class="mb-3"><label for="current_password" class="form-label">Current Password</label><input type="password" class="form-control" id="current_password" name="current_password"><small class="form-text text-muted">Leave blank if not changing.</small></div><div class="row"><div class="col-md-6 mb-3"><label for="new_password" class="form-label">New Password</label><input type="password" class="form-control" id="new_password" name="new_password"></div><div class="col-md-6 mb-3"><label for="confirm_password" class="form-label">Confirm New Password</label><input type="password" class="form-control" id="confirm_password" name="confirm_password"></div></div><div class="text-end mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Save Changes</button></div></form></div></div>';
     } else { $html_content .= '<div class="alert alert-danger">Could not load admin profile.</div>'; }
 }
-elseif ($action === 'admin_settings') {
-    $html_content .= '<div class="card"><div class="card-header"><h5 class="card-title mb-0">Admin Settings</h5></div><div class="card-body"><p>This section is for managing global site settings. Functionality to be added.</p></div></div>';
+elseif ($action === 'contact_messages') {
+    $html_content .= '<div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Contact Messages</h5>
+            <div>
+                <a href="backend.php?action=contact_messages&filter=all" class="btn btn-sm ' . ($filter === 'all' ? 'btn-primary' : 'btn-outline-secondary') . '">All (' . $total_count . ')</a>
+                <a href="backend.php?action=contact_messages&filter=unread" class="btn btn-sm ' . ($filter === 'unread' ? 'btn-primary' : 'btn-outline-secondary') . '">Unread (' . $unread_count . ')</a>
+                <a href="backend.php?action=contact_messages&filter=read" class="btn btn-sm ' . ($filter === 'read' ? 'btn-primary' : 'btn-outline-secondary') . '">Read</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+    
+    if (!empty($contact_messages)) {
+        foreach ($contact_messages as $msg) {
+            $status_icon = $msg['is_read'] ? '<i class="bi bi-envelope-open text-muted"></i>' : '<i class="bi bi-envelope-fill text-primary"></i>';
+            $row_class = $msg['is_read'] ? '' : 'table-warning';
+            
+            $html_content .= '<tr class="' . $row_class . '">
+                <td>' . $status_icon . '</td>
+                <td>' . htmlspecialchars($msg['name']) . '</td>
+                <td>' . htmlspecialchars($msg['email']) . '</td>
+                <td>' . htmlspecialchars(substr($msg['subject'], 0, 50)) . (strlen($msg['subject']) > 50 ? '...' : '') . '</td>
+                <td>' . date('M d, Y H:i', strtotime($msg['created_at'])) . '</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#messageModal' . $msg['id'] . '">
+                            <i class="bi bi-eye"></i> View
+                        </button>';
+            
+            if ($msg['is_read']) {
+                $html_content .= '<a href="backend.php?action=contact_messages&mark_unread=' . $msg['id'] . '&filter=' . $filter . '" class="btn btn-sm btn-outline-warning" title="Mark as Unread">
+                    <i class="bi bi-envelope"></i>
+                </a>';
+            } else {
+                $html_content .= '<a href="backend.php?action=contact_messages&mark_read=' . $msg['id'] . '&filter=' . $filter . '" class="btn btn-sm btn-outline-success" title="Mark as Read">
+                    <i class="bi bi-envelope-open"></i>
+                </a>';
+            }
+            
+            $html_content .= '<a href="backend.php?action=contact_messages&delete=' . $msg['id'] . '&filter=' . $filter . '" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Delete this message?\')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>';
+        }
+    } else {
+        $html_content .= '<tr><td colspan="6" class="text-center">No messages found.</td></tr>';
+    }
+    
+    $html_content .= '</tbody>
+                </table>
+            </div>
+        </div>
+    </div>';
+    
+    // Add modals for viewing messages
+    if (!empty($contact_messages)) {
+        foreach ($contact_messages as $msg) {
+            $html_content .= '
+            <div class="modal fade" id="messageModal' . $msg['id'] . '" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content bg-dark">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Message from ' . htmlspecialchars($msg['name']) . '</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Name:</strong> ' . htmlspecialchars($msg['name']) . '
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Email:</strong> <a href="mailto:' . htmlspecialchars($msg['email']) . '">' . htmlspecialchars($msg['email']) . '</a>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Subject:</strong> ' . htmlspecialchars($msg['subject']) . '
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Date:</strong> ' . date('M d, Y H:i', strtotime($msg['created_at'])) . '
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Message:</strong>
+                                <div class="mt-2 p-3 bg-dark-surface-2 rounded">
+                                    ' . nl2br(htmlspecialchars($msg['message'])) . '
+                                </div>
+                            </div>
+                            <div class="text-muted small">
+                                IP Address: ' . htmlspecialchars($msg['ip_address']) . '
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="mailto:' . htmlspecialchars($msg['email']) . '?subject=Re: ' . htmlspecialchars($msg['subject']) . '" class="btn btn-primary">
+                                <i class="bi bi-reply"></i> Reply via Email
+                            </a>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>';
+        }
+    }
 }
 else {
     $html_content .= '<div class="alert alert-warning">The requested page or action was not found.</div>';

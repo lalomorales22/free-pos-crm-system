@@ -86,23 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
         $subject = $conn->real_escape_string($subject);
         $message_content = $conn->real_escape_string($message_content);
         
-        // Store in a contact_messages table (you'd need to create this)
-        /*
-        CREATE TABLE contact_messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
-            subject VARCHAR(200) NOT NULL,
-            message TEXT NOT NULL,
-            ip_address VARCHAR(45),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        */
-        
+        // Store in contact_messages table
         $ip = $_SERVER['REMOTE_ADDR'];
         
-        // Uncomment if you've created the table
-        /*
         $sql = "INSERT INTO contact_messages (name, email, subject, message, ip_address) 
                 VALUES ('$name', '$email', '$subject', '$message_content', '$ip')";
         
@@ -113,12 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
         } else {
             $error = "Error: " . $conn->error;
         }
-        */
-        
-        // For now, just show success message
-        $message = "Thank you for your message! We'll get back to you soon.";
-        // Clear form data
-        $name = $email = $subject = $message_content = '';
     }
 }
 ?>
@@ -290,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                             <i class="bi bi-geo-alt"></i>
                         </div>
                         <h3>Visit Us</h3>
-                        <p>710 Pacific Highway<br>San Diego, CA 92101<br>United States</p>
+                        <p>North Park<br>San Diego, CA 92101<br>United States</p>
                     </div>
                 </div>
             </div>
@@ -301,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                             <i class="bi bi-telephone"></i>
                         </div>
                         <h3>Call Us</h3>
-                        <p>Phone: (619) 555-0710<br>Toll Free: 1-800-710-GLASS</p>
+                        <p>Phone: 408-529-5712<br>WhatsApp: 408-529-5712</p>
                     </div>
                 </div>
             </div>
@@ -312,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                             <i class="bi bi-envelope"></i>
                         </div>
                         <h3>Email Us</h3>
-                        <p>info@710denglass.com<br>support@710denglass.com</p>
+                        <p>andrew@710denglass.com<br></p>
                     </div>
                 </div>
             </div>

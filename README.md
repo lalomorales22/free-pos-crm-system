@@ -174,7 +174,7 @@ This project is proprietary software. All rights reserved.
 ## 📞 Support
 
 For technical support or questions:
-- **Email**: info@710denglass.com
+- **Email**: andrew@710denglass.com
 - **GitHub Issues**: [Create an issue](https://github.com/lalomorales22/710denglass/issues)
 - **AI Chat**: Available on the website
 

@@ -307,8 +307,8 @@ if (isset($_POST['verify_age'])) {
                 <p>If you have any questions about these Terms and Conditions, please contact us at:</p>
                 <p>
                     710 Den Glass<br>
-                    Email: info@710denglass.com<br>
-                    Phone: (303) 555-7100
+                    Email: andrew@710denglass.com<br>
+                    Phone: 408-529-5712
                 </p>
             </div>
         </div>

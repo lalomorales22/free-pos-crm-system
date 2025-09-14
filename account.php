@@ -99,6 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     }
 }
 
+// Handle cart removal
+if (isset($_GET['remove_from_cart']) && isset($_SESSION['cart'][$_GET['remove_from_cart']])) {
+    unset($_SESSION['cart'][$_GET['remove_from_cart']]);
+    header("Location: account.php");
+    exit;
+}
+
 // Get recent orders
 $orders_query = "SELECT * FROM orders WHERE user_id = $user_id ORDER BY created_at DESC LIMIT 5";
 $orders_result = $conn->query($orders_query);
@@ -140,11 +147,12 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .account-section {
-            background-color: var(--dark-surface-2);
+            background-color: white;
             border-radius: 10px;
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
         }
         
         .account-heading {
@@ -153,6 +161,7 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             margin-bottom: 1.5rem;
             position: relative;
             padding-bottom: 0.75rem;
+            color: #333;
         }
         
         .account-heading::after {
@@ -169,13 +178,20 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             padding: 1rem;
             border-radius: 5px;
             transition: all 0.3s ease;
-            color: white;
+            color: #333;
+            text-decoration: none;
+            border: none;
+            margin-bottom: 0.5rem;
         }
         
-        .account-nav .nav-link:hover,
-        .account-nav .nav-link.active {
+        .account-nav .nav-link:hover {
             background-color: rgba(30, 136, 229, 0.1);
-            color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        
+        .account-nav .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
         }
         
         .account-nav .nav-link i {
@@ -184,9 +200,9 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         
         .profile-form .form-control,
         .profile-form .form-select {
-            background-color: var(--dark-surface-1);
-            border-color: var(--border-color);
-            color: white;
+            background-color: white;
+            border-color: #ddd;
+            color: #333;
             padding: 0.75rem 1rem;
         }
         
@@ -198,15 +214,17 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         
         .profile-form label {
             margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
         }
         
         .order-card {
-            background-color: var(--dark-surface-1);
+            background-color: white;
             border-radius: 10px;
             margin-bottom: 1rem;
             overflow: hidden;
             transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
+            border: 1px solid #e0e0e0;
         }
         
         .order-card:hover {
@@ -219,17 +237,17 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--border-color);
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
         }
         
         .order-id {
             font-weight: 600;
-            color: var(--primary-light);
+            color: var(--primary-color);
         }
         
         .order-date {
-            color: var(--text-muted);
+            color: #666;
             font-size: 0.9rem;
         }
         
@@ -240,6 +258,7 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         .order-total {
             font-weight: 600;
             font-size: 1.1rem;
+            color: #333;
         }
         
         .order-status {
@@ -283,13 +302,23 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         .empty-orders {
             text-align: center;
             padding: 2rem 0;
-            color: var(--text-muted);
+            color: #666;
         }
         
         .empty-orders i {
             font-size: 3rem;
             margin-bottom: 1rem;
             opacity: 0.5;
+            color: #999;
+        }
+        
+        /* Additional styling for white background compatibility */
+        .form-text {
+            color: #666 !important;
+        }
+        
+        .tab-content {
+            color: #333;
         }
     </style>
 </head>
@@ -322,48 +351,43 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
     <?php endif; ?>
 
     <!-- Top Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+    <nav class="navbar">
+        <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand" href="index.php">
-                <img src="images/icon.png" alt="710 Den Glass Logo" class="logo">
-                <span>710 Den Glass</span>
+                <img src="images/logo.png" alt="710DenGlass Logo" class="logo">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            Shop
-                        </a>
-                        <ul class="dropdown-menu dark-dropdown">
-                            <?php foreach ($categories as $category): ?>
-                            <li>
-                                <a class="dropdown-item" href="index.php?category=<?php echo $category['category_id']; ?>">
-                                    <?php echo $category['name']; ?>
-                                </a>
-                            </li>
-                            <?php endforeach; ?>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="index.php">All Products</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.php">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">Contact</a>
-                    </li>
-                </ul>
-                <div class="nav-btns">
-                    <a href="index.php?logout=1" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
+            <div class="d-flex align-items-center">
+                <a href="#" class="btn-icon me-2" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                    <i class="bi bi-cart3"></i>
+                    <?php 
+                    $cart_items_count = 0;
+                    if (isset($_SESSION['cart'])) {
+                        foreach ($_SESSION['cart'] as $item) {
+                            $cart_items_count += $item['quantity'];
+                        }
+                    }
+                    if ($cart_items_count > 0): ?>
+                    <span class="cart-badge"><?php echo $cart_items_count; ?></span>
+                    <?php endif; ?>
+                </a>
+                <?php if ($is_logged_in): ?>
+                <div class="dropdown">
+                    <a href="#" class="btn-icon" data-bs-toggle="dropdown"><i class="bi bi-person-fill"></i></a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text">Hello, <?php echo htmlspecialchars($username); ?></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <?php if ($is_admin): ?>
+                        <li><a class="dropdown-item" href="backend.php"><i class="bi bi-gear me-2"></i> Admin</a></li>
+                        <?php endif; ?>
+                        <li><a class="dropdown-item" href="account.php"><i class="bi bi-person me-2"></i> Account</a></li>
+                        <li><a class="dropdown-item" href="orders.php"><i class="bi bi-box me-2"></i> Orders</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+                    </ul>
                 </div>
+                <?php else: ?>
+                <a href="login.php" class="btn-icon" title="Login / Register"><i class="bi bi-person-circle"></i></a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -388,16 +412,17 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             <div class="col-lg-3 mb-4">
                 <div class="account-section">
                     <h3 class="account-heading">My Account</h3>
-                    <nav class="account-nav">
-                        <a class="nav-link active" href="#profile" data-bs-toggle="tab">
+                    <nav class="nav nav-pills flex-column account-nav" id="account-tabs" role="tablist">
+                        <a class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
                             <i class="bi bi-person"></i> Profile
                         </a>
-                        <a class="nav-link" href="orders.php" data-bs-toggle="tab">
+                        <a class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">
                             <i class="bi bi-box"></i> Orders
                         </a>
-                        <a class="nav-link" href="#password" data-bs-toggle="tab">
+                        <a class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
                             <i class="bi bi-shield-lock"></i> Change Password
                         </a>
+                        <hr class="my-3">
                         <a class="nav-link" href="index.php">
                             <i class="bi bi-shop"></i> Continue Shopping
                         </a>
@@ -409,9 +434,9 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             </div>
             
             <div class="col-lg-9">
-                <div class="tab-content">
+                <div class="tab-content" id="account-tab-content">
                     <!-- Profile Tab -->
-                    <div class="tab-pane fade show active" id="profile">
+                    <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                         <div class="account-section">
                             <h3 class="account-heading">Profile Information</h3>
                             <form class="profile-form" method="post">
@@ -462,7 +487,7 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                     </div>
                     
                     <!-- Orders Tab -->
-                    <div class="tab-pane fade" id="orders">
+                    <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
                         <div class="account-section">
                             <h3 class="account-heading">Recent Orders</h3>
                             
@@ -494,8 +519,8 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                                 <?php endforeach; ?>
                                 
                                 <div class="mt-3">
-                                    <a href="orders.php" class="btn btn-outline-secondary btn-sm">
-                                        View All Orders
+                                    <a href="orders.php" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-box-arrow-up-right"></i> View All Orders
                                     </a>
                                 </div>
                             <?php else: ?>
@@ -509,7 +534,7 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                     </div>
                     
                     <!-- Change Password Tab -->
-                    <div class="tab-pane fade" id="password">
+                    <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
                         <div class="account-section">
                             <h3 class="account-heading">Change Password</h3>
                             <form class="profile-form" method="post">
@@ -535,6 +560,62 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Cart Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="cartOffcanvasLabel">Shopping Cart</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <?php 
+            $cart_total = 0;
+            if (isset($_SESSION['cart'])) {
+                foreach ($_SESSION['cart'] as $item) {
+                    $cart_total += $item['price'] * $item['quantity'];
+                }
+            }
+            ?>
+            <?php if (!empty($_SESSION['cart'])): ?>
+            <form method="post" action="account.php">
+                <div class="cart-items">
+                    <?php foreach ($_SESSION['cart'] as $item_id => $item): ?>
+                    <div class="cart-item">
+                        <div class="cart-item-image">
+                            <img src="<?php echo (!empty($item['image']) && file_exists(trim($item['image'],'/'))) ? $item['image'] : 'images/placeholder.jpg'; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                        </div>
+                        <div class="cart-item-details">
+                            <h5 class="cart-item-title"><?php echo htmlspecialchars($item['name']); ?></h5>
+                            <div class="cart-item-price">$<?php echo number_format($item['price'], 2); ?></div>
+                            <input type="number" name="cart_quantity[<?php echo $item_id; ?>]" value="<?php echo $item['quantity']; ?>" min="1" class="form-control form-control-sm cart-item-quantity">
+                        </div>
+                        <div class="cart-item-total">
+                            $<?php echo number_format($item['price'] * $item['quantity'], 2); ?>
+                        </div>
+                        <button type="button" onclick="window.location.href='account.php?remove_from_cart=<?php echo $item_id; ?>'" class="cart-item-remove" title="Remove Item">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="cart-summary mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Subtotal:</span>
+                        <strong>$<?php echo number_format($cart_total, 2); ?></strong>
+                    </div>
+                    <button type="submit" name="update_cart" class="btn btn-outline-primary w-100 mb-2"><i class="bi bi-arrow-repeat"></i> Update Cart</button>
+                    <a href="checkout.php" class="btn btn-primary w-100"><i class="bi bi-credit-card"></i> Checkout</a>
+                </div>
+            </form>
+            <?php else: ?>
+            <div class="empty-cart">
+                <i class="bi bi-cart-x"></i>
+                <p>Your cart is empty.</p>
+                <a href="index.php" class="btn btn-primary">Start Shopping</a>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -588,5 +669,39 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tabs
+            const triggerTabList = document.querySelectorAll('#account-tabs a[data-bs-toggle="tab"]');
+            triggerTabList.forEach(triggerEl => {
+                const tabTrigger = new bootstrap.Tab(triggerEl);
+                
+                triggerEl.addEventListener('click', event => {
+                    event.preventDefault();
+                    tabTrigger.show();
+                });
+            });
+            
+            // Handle URL hash for direct tab access
+            if (window.location.hash) {
+                const hash = window.location.hash;
+                const triggerEl = document.querySelector('#account-tabs a[data-bs-target="' + hash + '"]');
+                if (triggerEl) {
+                    const tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                }
+            }
+            
+            // Update URL hash when tab changes
+            triggerTabList.forEach(triggerEl => {
+                triggerEl.addEventListener('shown.bs.tab', event => {
+                    const target = event.target.getAttribute('data-bs-target');
+                    if (target) {
+                        history.replaceState(null, null, target);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
