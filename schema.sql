@@ -1,3 +1,12 @@
+-- ========================================
+-- 710 DEN GLASS E-COMMERCE DATABASE SCHEMA
+-- ========================================
+-- Version: 2.0
+-- Last Updated: September 2025
+-- Description: Complete database schema for 710 Den Glass e-commerce platform
+-- Features: Products, Orders, Users, Categories, Tags, Contact Messages, Chat, Reviews
+-- ========================================
+
 -- Create the database
 CREATE DATABASE IF NOT EXISTS den_glass_shop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE den_glass_shop;
@@ -239,26 +248,16 @@ INSERT INTO tags (name) VALUES
 ('Thick Glass'), ('Colored Accents'), ('Klein Recycler'), ('Beaker Base'), ('Straight Tube'),
 ('Limited Edition'), ('Thermal Banger'), ('Carb Cap Included'), ('Ice Pinch');
 
--- Sample Promotions (Review and keep/modify if they are actual planned promotions for go-live)
-INSERT INTO promotions (name, description, discount_type, discount_value, code, start_date, end_date, usage_limit, usage_limit_per_user, is_active) VALUES
-('Grand Opening 15%', 'Celebrate our launch! Get 15% off your first order.', 'percentage', 15.00, 'WELCOME15', '2024-06-01 00:00:00', '2024-08-31 23:59:59', 2000, 1, 1),
-('Weekly Deal - Rigs', 'This week only, $10 off selected Dab Rigs.', 'fixed_amount', 10.00, 'RIGWEEK', '2024-06-03 00:00:00', '2024-06-09 23:59:59', 500, 1, 1);
+-- Sample Promotions (Optional - Update dates as needed for actual promotions)
+-- INSERT INTO promotions (name, description, discount_type, discount_value, code, start_date, end_date, usage_limit, usage_limit_per_user, is_active) VALUES
+-- ('Grand Opening 15%', 'Celebrate our launch! Get 15% off your first order.', 'percentage', 15.00, 'WELCOME15', '2025-01-01 00:00:00', '2025-12-31 23:59:59', 2000, 1, 1),
+-- ('Weekly Deal - Rigs', 'This week only, $10 off selected Dab Rigs.', 'fixed_amount', 10.00, 'RIGWEEK', '2025-01-01 00:00:00', '2025-01-07 23:59:59', 500, 1, 1);
 
 -- --------------------------------------------------------
--- FINAL ALTERATIONS & INDEXES
+-- ADDITIONAL FEATURES
 -- --------------------------------------------------------
 
--- Note: The ENUM for order_status is already applied in the CREATE TABLE statement for orders.
-
--- Add some potentially useful indexes for performance
-CREATE INDEX idx_products_name ON products(name);
--- sku is already UNIQUE which creates an index, but an explicit index can sometimes be beneficial for specific query patterns.
--- CREATE INDEX idx_products_sku ON products(sku); 
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(order_status);
-CREATE INDEX idx_order_items_product_id ON order_items(product_id);
-
-CREATE TABLE IF NOT EXISTS chat_interactions (
+CREATE TABLE chat_interactions (
     interaction_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
     session_id VARCHAR(255) NULL,
@@ -289,7 +288,7 @@ GROUP BY DATE(created_at)
 ORDER BY chat_date DESC;
 
 -- Contact Messages table
-CREATE TABLE IF NOT EXISTS contact_messages (
+CREATE TABLE contact_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -298,7 +297,38 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     ip_address VARCHAR(45),
     is_read BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_created_at (created_at),
-    INDEX idx_is_read (is_read)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- PERFORMANCE INDEXES
+-- --------------------------------------------------------
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(order_status);
+CREATE INDEX idx_order_items_product_id ON order_items(product_id);
+CREATE INDEX idx_contact_messages_created_at ON contact_messages(created_at);
+CREATE INDEX idx_contact_messages_is_read ON contact_messages(is_read);
+CREATE INDEX idx_chat_interactions_user_id ON chat_interactions(user_id);
+CREATE INDEX idx_chat_interactions_created_at ON chat_interactions(created_at);
+
+-- ========================================
+-- SCHEMA INSTALLATION COMPLETE
+-- ========================================
+-- 
+-- This schema includes:
+-- ✓ 16 Tables with proper relationships
+-- ✓ Product management with up to 5 images per product
+-- ✓ User management with admin capabilities
+-- ✓ Order processing with detailed tracking
+-- ✓ Contact message system
+-- ✓ AI chat interaction logging
+-- ✓ Performance indexes for optimal queries
+-- ✓ Triggers for data validation
+-- 
+-- To install:
+-- 1. Run this entire script on a fresh MySQL database
+-- 2. Update denglass-config.php with your database credentials
+-- 3. Login with admin/admin@710denglass.com (password: admin123)
+-- 
+-- ======================================== 

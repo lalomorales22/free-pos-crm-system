@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 
 // Check login status
 $is_logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 
 $error_message = '';
 

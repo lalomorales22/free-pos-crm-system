@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 
 
 if (!isset($_SESSION['user_id']) || !isset($_GET['order_id'])) {

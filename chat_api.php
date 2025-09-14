@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');

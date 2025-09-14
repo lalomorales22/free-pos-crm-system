@@ -2,7 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php'; // Ensure this path is correct
+require_once __DIR__ . '/../applications/denglass-config.php'; // Ensure this path is correct
 
 // Debug session information - useful for development
 // error_log("Session data in backend.php: " . print_r($_SESSION, true));

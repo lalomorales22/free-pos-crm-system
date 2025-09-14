@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 
 $page_title = "Contact Us - Den Glass Shop";
 

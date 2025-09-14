@@ -2,7 +2,7 @@
 session_start();
 
 // Include the centralized database configuration file
-require_once __DIR__ . '/applications/denglass-config.php';
+require_once __DIR__ . '/../applications/denglass-config.php';
 // The $conn variable is now available from the included den-config.php
 // Ensure $conn is valid before proceeding (already checked in den-config.php)
 
