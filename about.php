@@ -65,7 +65,7 @@ foreach ($_SESSION['cart'] as $item) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - 710 Den Glass</title>
+    <title>About Andrew - 710 Den Glass</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,79 +73,233 @@ foreach ($_SESSION['cart'] as $item) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* About-specific styles */
+        /* Andrew's Story - Black & White Design */
         .about-hero {
-            background-color: var(--muted);
-            padding: 4rem 0;
+            background: #FFFFFF;
+            padding: 5rem 0;
             text-align: center;
-            border-bottom: 1px solid var(--border);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .about-hero .container {
+            position: relative;
+            z-index: 2;
         }
         
         .about-hero h1 {
-            color: var(--foreground);
+            font-size: 3.5rem;
+            font-weight: 700;
             margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .about-hero p {
-            color: var(--muted-foreground);
-            font-size: 1.125rem;
+            font-size: 1.25rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
-        .about-section {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 2rem;
+        /* Story Sections */
+        .story-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .story-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: #000000;
+        }
+        
+        .story-section h2 {
+            color: #333;
+            font-weight: 700;
             margin-bottom: 2rem;
-            box-shadow: var(--shadow-sm);
+            font-size: 2.5rem;
+            position: relative;
         }
         
-        .about-section h2 {
-            color: var(--foreground);
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.75rem;
-        }
-        
-        .about-section p {
-            color: var(--muted-foreground);
+        .story-section p {
+            color: #555;
             line-height: 1.8;
+            font-size: 1.1rem;
             margin-bottom: 1.5rem;
         }
         
-        .team-member {
+        /* Animated Character Image Layout */
+        .character-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .character-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
             text-align: center;
-            padding: 1.5rem;
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
         }
         
-        .team-member img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
+        .character-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #000000;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .character-image {
+            width: 100%;
+            height: 250px;
             object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .character-card:hover .character-image {
+            transform: scale(1.05);
+        }
+        
+        .character-card h3 {
+            color: #333;
+            font-weight: 600;
             margin-bottom: 1rem;
-            border: 3px solid var(--border);
+            font-size: 1.5rem;
         }
         
-        .team-member h4 {
-            color: var(--foreground);
-            margin-bottom: 0.5rem;
+        .character-card p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 1rem;
         }
         
-        .team-member .role {
-            color: var(--primary);
-            font-weight: 500;
+        /* Andrew's Journey Timeline */
+        .journey-timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+        
+        .journey-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #000000;
+            transform: translateX(-50%);
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        
+        .timeline-content {
+            flex: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin: 0 2rem;
+            position: relative;
+        }
+        
+        .timeline-year {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #000000;
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            z-index: 2;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timeline-content h3 {
+            color: #333;
+            font-weight: 600;
             margin-bottom: 1rem;
         }
         
-        .team-member p {
-            color: var(--muted-foreground);
-            font-size: 0.875rem;
+        .timeline-content p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .about-hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .journey-timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-item {
+                flex-direction: column !important;
+                text-align: center;
+            }
+            
+            .timeline-item:nth-child(even) {
+                flex-direction: column !important;
+            }
+            
+            .timeline-content {
+                margin: 0 0 0 3rem;
+            }
+            
+            .timeline-year {
+                left: 20px;
+                position: relative;
+                transform: none;
+                margin-bottom: 1rem;
+            }
+            
+            .character-showcase {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -216,135 +370,94 @@ foreach ($_SESSION['cart'] as $item) {
     <section class="about-hero">
         <div class="container">
             <div class="text-center">
-                <h1>About 710 Den Glass</h1>
-                <p class="lead">Handling premium glass since 2015</p>
+                <h1>Meet Andrew</h1>
+                <p class="lead">The visionary behind 710 Den Glass - crafting premium glass experiences since 2015</p>
             </div>
         </div>
     </section>
 
     <!-- Main Content -->
     <div class="container main-container">
-        <!-- Our Story -->
-        <div class="card mb-5">
-            <div class="card-content">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-4 mb-lg-0">
-                    <h2 class="section-title">Our Story</h2>
-                    <p>710 Den Glass started as a small passion project in 2015, born from our founder's deep appreciation for glass artistry and craftsmanship. What began as a modest workshop has grown into a premier destination for glass enthusiasts and collectors.</p>
-                    <p>Our commitment to quality and innovation has never wavered. We work with talented artists across the country to bring unique, functional pieces to our customers. Every product in our collection is carefully selected for its quality, design, and exceptional craftsmanship.</p>
-                    <p>Today, 710 Den Glass has evolved into a community of glass enthusiasts, artists, and collectors united by a shared passion for this timeless art form. We take pride in offering a curated collection that represents the very best in contemporary glass design.</p>
-                </div>
-                <div class="col-lg-6">
-                    <div class="about-image">
-                        <img src="images/about-story.jpg" alt="710 Den Glass Workshop" 
-                             onerror="this.src='images/placeholder.jpg';this.onerror='';">
-                    </div>
-                </div>
-            </div>
-            </div>
+        <!-- Andrew's Story -->
+        <div class="story-section">
+            <h2>Andrew's Story</h2>
+            <p>710 Den Glass started as Andrew's passion project in 2015, born from his deep appreciation for glass artistry and craftsmanship. What began as a modest workshop has grown into a premier destination for glass enthusiasts and collectors.</p>
+            <p>Andrew's commitment to quality and innovation has never wavered. He works with talented artists across the country to bring unique, functional pieces to customers. Every product in the collection is carefully selected for its quality, design, and exceptional craftsmanship.</p>
+            <p>Today, 710 Den Glass has evolved into a community of glass enthusiasts, artists, and collectors united by a shared passion for this timeless art form. Andrew takes pride in offering a curated collection that represents the very best in contemporary glass design.</p>
         </div>
 
-        <!-- Our Values -->
-        <div class="card mb-5">
-            <div class="card-content">
-            <h2 class="section-title text-center mb-4">Our Core Values</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card text-center">
-                        <div class="card-content">
-                        <div class="values-icon">
-                            <i class="bi bi-gem"></i>
-                        </div>
-                        <h3>Quality</h3>
-                        <p>We never compromise on quality. Every piece in our collection undergoes rigorous inspection to ensure it meets our exacting standards. We believe in creating pieces that stand the test of time.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card text-center">
-                        <div class="card-content">
-                        <div class="values-icon">
-                            <i class="bi bi-brush"></i>
-                        </div>
-                        <h3>Artistry</h3>
-                        <p>We celebrate the unique art of glass craftsmanship. Our products combine traditional techniques with innovative designs, resulting in pieces that are both functional and beautiful.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card text-center">
-                        <div class="card-content">
-                        <div class="values-icon">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <h3>Community</h3>
-                        <p>We believe in fostering a community of glass enthusiasts. We support artists, educate customers, and create spaces where people can connect through their shared passion for glass.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Our Journey -->
-        <div class="card mb-5">
-            <div class="card-content">
-            <div class="row">
-                <div class="col-lg-6 order-lg-2 mb-4 mb-lg-0">
-                    <h2 class="section-title">Our Journey</h2>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-year">2015</div>
-                            <p>710 Den Glass was founded in San Diego, California. Our first workshop opened with a small collection of handcrafted pieces.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2017</div>
-                            <p>We expanded our collection to include collaborations with artists from across the country, bringing diverse styles and techniques to our customers.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2019</div>
-                            <p>Our online store launched, allowing us to share our passion for glass with customers nationwide. The 710 Den community began to grow beyond San Diego.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2021</div>
-                            <p>We introduced our premium line of custom pieces, offering customers the opportunity to own truly unique, one-of-a-kind glass artwork.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">Today</div>
-                            <p>We continue to grow while maintaining our commitment to quality, artistry, and community. We're excited to share our passion for glass with you.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 order-lg-1">
-                    <div class="about-image">
-                        <img src="images/about-journey.jpg" alt="710 Den Glass Journey"
-                             onerror="this.src='images/placeholder.jpg';this.onerror='';">
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Our Team -->
-        <div class="card mb-5">
-            <div class="card-content">
-            <h2 class="section-title text-center mb-4">Meet Our Team</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card text-center">
-                        <div class="card-content">
-                        <img src="images/team-1.jpg" class="team-member-image" alt="Team Member"
-                             onerror="this.src='images/placeholder.jpg';this.onerror='';">
-                        <div class="team-member-info">
-                            <h3 class="team-member-name">Andrew Friedman</h3>
-                            <div class="team-member-position">Founder & Creative Director</div>
-                            <p>Andrew founded 710 Den Glass with a vision of bringing exceptional glass art to enthusiasts everywhere. His expertise in glass techniques and keen eye for design guide our collection.</p>
-                        </div>
-                        </div>
-                    </div>
+        <!-- Character Showcase -->
+        <div class="story-section">
+            <h2>Andrew's World</h2>
+            <p>Get to know Andrew through these animated scenes that capture his passion for glass artistry and dedication to the craft.</p>
+            
+            <div class="character-showcase">
+                <div class="character-card">
+                    <img src="images/about-hero.jpg" alt="Andrew in his workshop" class="character-image"
+                         onerror="this.src='images/placeholder.jpg';this.onerror='';">
+                    <h3>The Craftsman</h3>
+                    <p>Andrew in his element, working with precision and passion to curate the finest glass pieces for the 710 Den collection.</p>
                 </div>
                 
+                <div class="character-card">
+                    <img src="images/about-story.jpg" alt="Andrew discovering new pieces" class="character-image"
+                         onerror="this.src='images/placeholder.jpg';this.onerror='';">
+                    <h3>The Explorer</h3>
+                    <p>Always on the hunt for unique pieces and innovative designs, Andrew travels to connect with artists and discover the next addition to the collection.</p>
+                </div>
+                
+                <div class="character-card">
+                    <img src="images/about-journey.jpg" alt="Andrew with the community" class="character-image"
+                         onerror="this.src='images/placeholder.jpg';this.onerror='';">
+                    <h3>The Community Builder</h3>
+                    <p>Building connections and fostering a community of glass enthusiasts who share Andrew's passion for quality and artistry.</p>
+                </div>
             </div>
+        </div>
+
+        <!-- Andrew's Journey Timeline -->
+        <div class="story-section">
+            <h2>The Journey</h2>
+            <div class="journey-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h3>The Beginning</h3>
+                        <p>Andrew founded 710 Den Glass in San Diego, California. His first workshop opened with a small collection of handcrafted pieces and a big dream.</p>
+                    </div>
+                    <div class="timeline-year">2015</div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h3>Expanding Horizons</h3>
+                        <p>Andrew expanded the collection to include collaborations with artists from across the country, bringing diverse styles and techniques to customers.</p>
+                    </div>
+                    <div class="timeline-year">2017</div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h3>Going Digital</h3>
+                        <p>The online store launched, allowing Andrew to share his passion for glass with customers nationwide. The 710 Den community began to grow beyond San Diego.</p>
+                    </div>
+                    <div class="timeline-year">2019</div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h3>Premium Collections</h3>
+                        <p>Andrew introduced the premium line of custom pieces, offering customers the opportunity to own truly unique, one-of-a-kind glass artwork.</p>
+                    </div>
+                    <div class="timeline-year">2021</div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h3>The Future</h3>
+                        <p>Andrew continues to grow 710 Den Glass while maintaining his commitment to quality, artistry, and community. He's excited to share his passion for glass with you.</p>
+                    </div>
+                    <div class="timeline-year">Today</div>
+                </div>
             </div>
         </div>
     </div>
@@ -453,9 +566,9 @@ foreach ($_SESSION['cart'] as $item) {
                 <div class="col-md-2">
                     <h4>Connect With Us</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.threads.com/@r17quartz" class="social-link"><i class="bi bi-twitter"></i></a>
                     </div>
                 </div>
             </div>

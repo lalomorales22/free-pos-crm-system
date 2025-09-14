@@ -588,9 +588,9 @@ function build_filter_link($params_to_add_or_update) {
                 <div class="col-md-2">
                     <h4>Connect</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-instagram"></i></a>
+                        <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-facebook"></i></a>
+                        <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-twitter"></i></a>
                     </div>
                 </div>
             </div>

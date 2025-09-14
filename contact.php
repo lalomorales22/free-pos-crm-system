@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                             <i class="bi bi-geo-alt"></i>
                         </div>
                         <h3>Visit Us</h3>
-                        <p>North Park<br>San Diego, CA 92101<br>United States</p>
+                        <p>San Diego, CA</p>
                     </div>
                 </div>
             </div>
@@ -281,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                             <i class="bi bi-telephone"></i>
                         </div>
                         <h3>Call Us</h3>
-                        <p>Phone: 408-529-5712<br>WhatsApp: 408-529-5712</p>
+                        <p>WhatsApp: 408-529-5712</p>
                     </div>
                 </div>
             </div>
@@ -491,9 +491,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
                 <div class="col-md-2">
                     <h4>Connect With Us</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-twitter"></i></a>
                     </div>
                 </div>
             </div>

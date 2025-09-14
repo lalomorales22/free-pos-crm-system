@@ -358,8 +358,8 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--dark-surface-1);
-            color: #ffffff;
+            background-color: #f8f9fa;
+            color: #333333;
         }
 
         .chat-container {
@@ -369,32 +369,32 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .chat-wrapper {
-            border: 2px solid var(--primary-color);
+            border: 2px solid #000000;
             border-radius: 15px;
             overflow: hidden;
-            background-color: var(--dark-surface-2);
+            background-color: white;
         }
 
         .chat-header {
-            background-color: var(--dark-surface-2);
+            background-color: #000000;
             padding: 20px;
             text-align: center;
-            border-bottom: 1px solid var(--primary-color);
+            border-bottom: 1px solid #000000;
         }
 
         .chat-header h1 {
             margin: 0;
-            color: var(--primary-light);
+            color: white;
             font-weight: 600;
         }
 
         .chat-header p {
             margin: 10px 0 0 0;
-            color: var(--text-muted);
+            color: #cccccc;
         }
 
         .chat-messages {
-            background-color: var(--dark-surface-2);
+            background-color: white;
             height: 500px;
             overflow-y: auto;
             padding: 20px;
@@ -423,14 +423,15 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .message.user .message-content {
-            background-color: var(--primary-color);
+            background-color: #000000;
             color: white;
             border-bottom-right-radius: 5px;
         }
 
         .message.assistant .message-content {
-            background-color: var(--chat-assistant-bg);
-            color: white;
+            background-color: #f8f9fa;
+            color: #333333;
+            border: 1px solid #e0e0e0;
             border-bottom-left-radius: 5px;
         }
 
@@ -446,19 +447,21 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .message.user .message-avatar {
-            background-color: var(--primary-dark);
+            background-color: #000000;
+            color: white;
             order: 2;
         }
 
         .message.assistant .message-avatar {
-            background-color: var(--accent-color);
+            background-color: #666666;
+            color: white;
             order: 1;
         }
 
         .chat-input-container {
-            background-color: var(--dark-surface-2);
+            background-color: white;
             padding: 20px;
-            border-top: 1px solid var(--primary-color);
+            border-top: 1px solid #e0e0e0;
         }
 
         .chat-input-form {
@@ -469,11 +472,11 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
 
         .chat-input {
             flex-grow: 1;
-            background-color: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background-color: white;
+            border: 1px solid #ddd;
             border-radius: 25px;
             padding: 12px 20px;
-            color: white;
+            color: #333333;
             resize: none;
             min-height: 50px;
             max-height: 120px;
@@ -481,12 +484,17 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
 
         .chat-input:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(30,136,229,0.25);
+            border-color: #000000;
+            box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #999999;
+            opacity: 1;
         }
 
         .chat-send-btn {
-            background-color: var(--primary-color);
+            background-color: #000000;
             border: none;
             border-radius: 50%;
             width: 50px;
@@ -500,12 +508,12 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .chat-send-btn:hover {
-            background-color: var(--primary-dark);
+            background-color: #333333;
             transform: scale(1.05);
         }
 
         .chat-send-btn:disabled {
-            background-color: var(--text-muted);
+            background-color: #cccccc;
             cursor: not-allowed;
             transform: none;
         }
@@ -514,7 +522,7 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             display: none;
             align-items: center;
             gap: 10px;
-            color: var(--text-muted);
+            color: #666666;
             font-style: italic;
             margin-bottom: 15px;
         }
@@ -528,7 +536,7 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: var(--text-muted);
+            background-color: #666666;
             animation: typing 1.4s infinite ease-in-out;
         }
 
@@ -548,18 +556,18 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
         }
 
         .chat-action-btn {
-            background-color: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background-color: white;
+            border: 1px solid #ddd;
             border-radius: 20px;
             padding: 8px 16px;
-            color: white;
+            color: #333333;
             font-size: 0.9rem;
             transition: all 0.3s ease;
         }
 
         .chat-action-btn:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: #000000;
+            border-color: #000000;
             color: white;
         }
 
@@ -889,9 +897,9 @@ $nav_categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                 <div class="col-md-2">
                     <h4>Connect With Us</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-twitter"></i></a>
                     </div>
                 </div>
             </div>

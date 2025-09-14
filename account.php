@@ -655,9 +655,9 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
                 <div class="col-md-2">
                     <h4>Connect With Us</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.instagram.com/r17quartz/" class="social-link"><i class="bi bi-twitter"></i></a>
                     </div>
                 </div>
             </div>
