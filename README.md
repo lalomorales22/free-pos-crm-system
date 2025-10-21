@@ -1,4 +1,5 @@
 # Your App Your Data – Free POS + CRM Sandbox
+<img width="2352" height="1262" alt="Screenshot 2025-10-20 at 11 25 44 PM" src="https://github.com/user-attachments/assets/8bfe0e3e-b2db-4246-a917-0e87021f2119" />
 
 Your App Your Data is a playful, modern take on a point-of-sale and customer relationship management stack. The project ships with an expressive front office storefront, a full-featured admin workspace, and an AI assistant so you can test-drive flows without handing over your data. Spin it up locally, drop it on a server, or remix it for your next retail concept.
 
